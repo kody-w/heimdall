@@ -1083,7 +1083,7 @@
       </div>
       <div class="identity-row">
         <span class="identity-key">Rappid</span>
-        <span class="identity-val">54fe0183-162d-4b8a-a951-ac938b4664eb</span>
+        <span class="identity-val">6428db2d-b8d0-4006-8150-2d22c3af43ba</span>
       </div>
       <div class="identity-row">
         <span class="identity-key">Kernel</span>
@@ -1386,7 +1386,7 @@ is unclear.</pre>
 "use strict";
 
 const FD = {
-  rappid: "54fe0183-162d-4b8a-a951-ac938b4664eb",
+  rappid: "6428db2d-b8d0-4006-8150-2d22c3af43ba",
   displayName: "Heimdall",
   slug: "heimdall",
   ghUser: "kody-w",
@@ -2584,7 +2584,7 @@ function _dcRenderDiff() {
 
   // ── Dream Catcher merge doctrine ─────────────────────────────────
   //
-  // From the Gareth conversation:
+  // From the operator's design conversation:
   //   "Whatever frame hit the UTC one first, that's canon, and then
   //    anything that doesn't contradict that, I'm going to layer on
   //    that... There are contradictions, so that doesn't get synced.
@@ -3004,7 +3004,7 @@ async function copy(text) {
 // Seed metadata — read by the card derivation logic. Set from the
 // substituted placeholders below so the card can render before any
 // async fetches land.
-window.__seedRappid      = "54fe0183-162d-4b8a-a951-ac938b4664eb";
+window.__seedRappid      = "6428db2d-b8d0-4006-8150-2d22c3af43ba";
 window.__seedDisplayName = "Heimdall";
 window.__seedKind        = "personal";
 window.__seedRepoName    = "heimdall";
@@ -3250,7 +3250,7 @@ function rappidSigil(rappid, size) {
 (function renderSigil() {
   const el = document.getElementById("hero-sigil");
   if (!el) return;
-  el.innerHTML = rappidSigil("54fe0183-162d-4b8a-a951-ac938b4664eb", 96);
+  el.innerHTML = rappidSigil("6428db2d-b8d0-4006-8150-2d22c3af43ba", 96);
 })();
 
 // ── Profile stats: memory count + age ──────────────────────────────
