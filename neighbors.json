@@ -1,4 +1,11 @@
 {
   "schema": "rapp-neighbors/1.0",
-  "neighbors": []
+  "neighbors": [
+    {
+      "slug": "kody-w/rapp-test-neighbor",
+      "url": "https://kody-w.github.io/rapp-test-neighbor/",
+      "trust": "public",
+      "note": "Canonical test neighbor — verifies cross-organism collab plumbing works."
+    }
+  ]
 }
