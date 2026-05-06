@@ -168,6 +168,7 @@
 
 <main>
   <section class="auth-pane" id="auth-pane">
+    <div id="signed-in-as" style="display:none;font-size:12px;color:#3fb950;margin-bottom:8px;"></div>
     <h2>Sign in to chat</h2>
     <p>This page is a vbrainstem — same GitHub OAuth flow as the egg hub's summon page. Same browser, same <code>kody-w.github.io</code> origin, so signing in here also signs you in across every other RAPP front door on the same domain (and vice versa).</p>
     <div class="row" style="margin-top:14px;">
@@ -1369,6 +1370,34 @@ async function sendMessage() {
       });
       if (!r.ok) {
         const err = await r.text();
+        // 401 from GitHub Models = the visitor's token doesn't carry Models
+        // access (OAuth-scope limitation, expired token, or account not
+        // enrolled). Clear the bad token, surface the auth pane with the
+        // paste-PAT path expanded so they have a clear next step. No silent
+        // fail — the screen state changes and explains itself.
+        if (r.status === 401) {
+          clearToken();
+          history.length = 0; // tool-call history is moot now
+          pending.remove();
+          // Re-show the auth pane and expand the paste-PAT details so the
+          // fallback is the *first* thing they see.
+          document.getElementById("auth-pane").hidden = false;
+          document.getElementById("chat-log").hidden = true;
+          document.getElementById("input-bar").hidden = true;
+          document.getElementById("chat-actions").hidden = true;
+          document.getElementById("memory-pane").hidden = true;
+          // Expand the <details> that contains the paste-PAT input
+          const det = document.querySelector("#auth-pane details");
+          if (det) det.open = true;
+          // Replace the auth pane heading with a clear hint
+          const h2 = document.querySelector("#auth-pane h2");
+          if (h2) h2.textContent = "Sign-in token didn't get GitHub Models access";
+          const p = document.querySelector("#auth-pane > p");
+          if (p) p.innerHTML = `Your last sign-in produced a token GitHub Models rejected (HTTP 401). Two ways to fix:<br><br>1. <strong>Easiest:</strong> paste a fine-grained PAT (or your <code>gh auth token</code> if you have <code>gh</code> CLI) below.<br>2. <strong>Re-OAuth:</strong> click <em>Sign in with GitHub</em> again — sometimes the worker exchange returns a stale code.`;
+          // Scroll the auth pane into view
+          document.getElementById("auth-pane").scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
         throw new Error("HTTP " + r.status + ": " + err.slice(0, 250));
       }
       const data = await r.json();
