@@ -1,0 +1,16 @@
+{
+  "schema": "rapp-rappid/1.1",
+  "rappid": "915f54e5-4c71-4de9-bba3-6604461d05e5",
+  "kind": "personal",
+  "name": "heimdall",
+  "display_name": "Heimdall",
+  "github": "https://github.com/kody-w/heimdall",
+  "url": "https://kody-w.github.io/heimdall",
+  "parent_rappid": "0b635450-c042-49fb-b4b1-bdb571044dec",
+  "parent_repo": "https://github.com/kody-w/rapp-installer",
+  "planted_by": "kody-w",
+  "planted_at": "2026-05-06T15:32:41Z",
+  "planted_from": null,
+  "kernel_version": "0.6.0",
+  "location": "Bifrost \u00b7 the watcher's threshold"
+}
