@@ -2007,6 +2007,11 @@
 
     <!-- Load Three.js early -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Pyodide — vbrainstem agent runtime. Same CDN + version the local
+         brainstem and the canonical doorman in installer/plant.sh use. The
+         deferred load lets the page paint before we pull the ~5MB runtime;
+         RAPP.Doorman.initPyodide() awaits this script's symbol with a poll. -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js" defer></script>
     
     <!-- ─────────── RAPP.Doorman — Copilot auth + chat dispatch ───────────
          Replaces the legacy Azure Function backend. Same device-code flow,
@@ -2140,39 +2145,256 @@
         return lines.join("\n");
       }
 
-      // ── Chat dispatch — non-tool-calling (sphere is a thin client) ─
-      async function chat({ message, history, system, model }) {
-        const tok = await ensureCopilotToken();
-        const r = await fetch(activeChatUrl(), {
-          method:"POST",
-          headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok},
-          body: JSON.stringify({
-            model: model || loadSettings().model || DEFAULT_MODEL,
-            messages: [
-              { role:"system", content: system },
-              ...(history || []),
-              { role:"user", content: message },
-            ],
-            max_tokens: 800,
-          }),
-        });
-        if (r.status === 401) { clearAuthState(); throw new Error("Sign-in expired — sign in again."); }
-        if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0,200)}`);
-        const d = await r.json();
-        const content = (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || "";
-        // Split |||VOICE||| if present (matches the canonical brainstem).
-        let assistant_response = content, voice_response = null;
-        const m = content.split("|||VOICE|||");
-        if (m.length === 2) {
-          assistant_response = m[0].trim();
-          voice_response = m[1].trim();
+      // ─────────────────────────────────────────────────────────────────
+      //  Pyodide — agents.py running in the browser (the real vbrainstem)
+      // ─────────────────────────────────────────────────────────────────
+      // Same agent.py files as a local brainstem (kody-w/RAPP raw URLs).
+      // Same agent contract: a class extending BasicAgent with .metadata
+      // and .perform(**kwargs). Agents are auto-discovered, their metadata
+      // becomes OpenAI tool defs, the LLM picks which to call. Identical
+      // pattern to installer/plant.sh's doorman + utils/web/index.html.
+      let pyodide = null;
+      let pyAgents = {};   // name → { instance, metadata, source }
+      let pyodideLoadingPromise = null;
+
+      const SEED_AGENT_BASE = "https://raw.githubusercontent.com/kody-w/RAPP/main/rapp_brainstem/agents/";
+      const PYODIDE_AGENTS = [
+        { file: "manage_memory_agent.py",  className: "ManageMemoryAgent",  tier: "doorman" },
+        { file: "context_memory_agent.py", className: "ContextMemoryAgent", tier: "doorman" },
+        { file: "learn_new_agent.py",      className: "LearnNewAgent",      tier: "ascended" },
+        { file: "swarm_factory_agent.py",  className: "SwarmFactoryAgent",  tier: "ascended" },
+      ];
+
+      // utils/local_storage.py shim — drop-in for AzureFileStorageManager
+      // backed by browser localStorage. Agents can't tell the difference.
+      const VB_LOCAL_STORAGE_PY = `"""utils/local_storage.py — Pyodide variant."""
+import json
+from js import localStorage
+_PREFIX = "vbrainstem_storage:"
+class AzureFileStorageManager:
+    DEFAULT_MARKER_GUID = "c0p110t0-aaaa-bbbb-cccc-123456789abc"
+    def __init__(self, share_name=None, **kwargs):
+        self.current_guid = None
+        self.shared_memory_path = "shared_memories"
+        self.default_file_name = "memory.json"
+        self.current_memory_path = self.shared_memory_path
+    def set_memory_context(self, user_guid=None):
+        if not user_guid or user_guid == self.DEFAULT_MARKER_GUID:
+            self.current_guid = None
+            self.current_memory_path = self.shared_memory_path
+            return True
+        self.current_guid = user_guid
+        self.current_memory_path = "memory/" + user_guid
+        return True
+    def _file_path(self):
+        if self.current_guid:
+            return "memory/" + self.current_guid + "/user_memory.json"
+        return "shared_memories/memory.json"
+    def read_json(self, file_path=None):
+        path = file_path or self._file_path()
+        raw = localStorage.getItem(_PREFIX + path)
+        if raw is None: return {}
+        try: return json.loads(raw)
+        except Exception: return {}
+    def write_json(self, data, file_path=None):
+        path = file_path or self._file_path()
+        localStorage.setItem(_PREFIX + path, json.dumps(data, default=str))
+        return True
+    def read_file(self, file_path):
+        return localStorage.getItem(_PREFIX + file_path)
+    def write_file(self, file_path, content):
+        localStorage.setItem(_PREFIX + file_path, content)
+        return True
+    def list_files(self, directory=""):
+        prefix = _PREFIX + directory
+        out = []
+        n = localStorage.length
+        for i in range(n):
+            k = localStorage.key(i)
+            if k and k.startswith(prefix):
+                out.append(k[len(_PREFIX):])
+        return out
+    def delete_file(self, file_path):
+        if localStorage.getItem(_PREFIX + file_path) is not None:
+            localStorage.removeItem(_PREFIX + file_path)
+            return True
+        return False
+    def file_exists(self, file_path):
+        return localStorage.getItem(_PREFIX + file_path) is not None
+`;
+      const VB_AZURE_REEXPORT_PY    = "from utils.local_storage import AzureFileStorageManager\n";
+      const VB_DYNAMICS_REEXPORT_PY = "from utils.local_storage import AzureFileStorageManager\nDynamicsStorageManager = AzureFileStorageManager\n";
+      const VB_FACTORY_PY           = "from utils.local_storage import AzureFileStorageManager\ndef get_storage_manager():\n    return AzureFileStorageManager()\n";
+
+      async function initPyodide(opts) {
+        opts = opts || {};
+        const ascended = !!opts.ascended;
+        if (pyodide && Object.keys(pyAgents).length) return pyodide;
+        if (pyodideLoadingPromise) return pyodideLoadingPromise;
+        pyodideLoadingPromise = (async () => {
+          try {
+            // Wait for the deferred Pyodide CDN script to define loadPyodide.
+            let waited = 0;
+            while (typeof loadPyodide === "undefined" && waited < 12000) {
+              await new Promise(r => setTimeout(r, 100));
+              waited += 100;
+            }
+            if (typeof loadPyodide === "undefined") {
+              console.info("[doorman] Pyodide CDN didn't load");
+              return null;
+            }
+            pyodide = await loadPyodide({ indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/" });
+            // Pull canonical BasicAgent from grail.
+            const basicResp = await fetch("https://raw.githubusercontent.com/kody-w/rapp-installer/main/rapp_brainstem/agents/basic_agent.py", { cache: "force-cache" });
+            const basicPy = basicResp.ok ? await basicResp.text() : "class BasicAgent:\n    def __init__(self, name=None, metadata=None):\n        if name is not None: self.name = name\n        if metadata is not None: self.metadata = metadata\n    def system_context(self):\n        return None\n";
+            pyodide.FS.mkdirTree("/agents");
+            pyodide.FS.writeFile("/agents/basic_agent.py", basicPy);
+            pyodide.FS.writeFile("/agents/__init__.py", "");
+            pyodide.FS.mkdirTree("/utils");
+            pyodide.FS.writeFile("/utils/__init__.py", "");
+            pyodide.FS.writeFile("/utils/local_storage.py", VB_LOCAL_STORAGE_PY);
+            pyodide.FS.writeFile("/utils/azure_file_storage.py", VB_AZURE_REEXPORT_PY);
+            pyodide.FS.writeFile("/utils/dynamics_storage.py", VB_DYNAMICS_REEXPORT_PY);
+            pyodide.FS.writeFile("/utils/storage_factory.py", VB_FACTORY_PY);
+            await pyodide.runPythonAsync(`import sys; sys.path.insert(0, '/')`);
+            // Load each canonical agent.
+            for (const cfg of PYODIDE_AGENTS) {
+              if (cfg.tier === "ascended" && !ascended) continue;
+              try {
+                const r = await fetch(SEED_AGENT_BASE + cfg.file, { cache: "no-cache" });
+                if (!r.ok) { console.info("[doorman] couldn't fetch", cfg.file, r.status); continue; }
+                const source = await r.text();
+                pyodide.FS.writeFile("/agents/" + cfg.file, source);
+                const moduleName = cfg.file.replace(/\.py$/, "");
+                await pyodide.runPythonAsync(
+                  `from agents.${moduleName} import ${cfg.className} as _Cls\n` +
+                  `_inst = _Cls()\n` +
+                  `_agent_${cfg.className.replace(/Agent$/, "")} = _inst\n`
+                );
+                const instance = pyodide.globals.get("_agent_" + cfg.className.replace(/Agent$/, ""));
+                if (!instance) continue;
+                const metadataPy = instance.metadata;
+                const metadata = metadataPy && metadataPy.toJs
+                  ? metadataPy.toJs({ dict_converter: Object.fromEntries })
+                  : metadataPy;
+                const agentName = (instance.name && String(instance.name)) || cfg.className.replace(/Agent$/, "");
+                pyAgents[agentName] = { instance, metadata, source };
+                console.info("[doorman] loaded agent", agentName, "from", cfg.file);
+              } catch (e) {
+                console.info("[doorman] agent load failed for", cfg.file, ":", e && (e.message || e));
+              }
+            }
+            console.info("[doorman] Pyodide ready, agents:", Object.keys(pyAgents).join(", "));
+            return pyodide;
+          } catch (e) {
+            console.info("[doorman] Pyodide init failed:", e && (e.message || e));
+            pyodide = null;
+            return null;
+          }
+        })();
+        return pyodideLoadingPromise;
+      }
+
+      // OpenAI tool defs from loaded agents' metadata.
+      function pyAgentsToolDefs() {
+        const defs = [];
+        for (const [name, info] of Object.entries(pyAgents)) {
+          if (!info || !info.metadata) continue;
+          const m = info.metadata;
+          defs.push({
+            type: "function",
+            function: {
+              name,
+              description: m.description || ("Run " + name),
+              parameters: m.parameters || { type: "object", properties: {}, required: [] },
+            },
+          });
         }
-        return { assistant_response, voice_response };
+        return defs;
+      }
+
+      // Tool dispatch — runs the agent.perform() in Pyodide.
+      async function dispatchPyodideToolCall(name, args) {
+        const info = pyAgents[name];
+        if (!info) return null;
+        try {
+          pyodide.globals.set("_call_args", pyodide.toPy(args || {}));
+          const result = await pyodide.runPythonAsync(`
+import json
+_a = _call_args.to_py() if hasattr(_call_args, 'to_py') else dict(_call_args)
+_r = _agent_${name}.perform(**_a)
+_r if isinstance(_r, str) else json.dumps(_r)
+`);
+          return typeof result === "string" ? result : String(result);
+        } catch (e) {
+          return "agent error: " + (e && e.message ? e.message : String(e));
+        }
+      }
+
+      // ── Chat dispatch — full tool-call loop, identical pattern to the
+      //    canonical doorman in installer/plant.sh and utils/web/index.html.
+      //    LLM emits tool_calls → we run the matching agent in Pyodide →
+      //    feed the result back as a 'tool' message → loop until LLM
+      //    produces final text. Capped at 4 rounds (mirrors brainstem.py).
+      async function chat({ message, history, system, model, onAgentLog }) {
+        // Kick Pyodide load in the background; tools become available
+        // once it finishes. First chat call may go without tools — fine.
+        initPyodide({ ascended: false }).catch(() => {});
+        const tok = await ensureCopilotToken();
+        const messages = [
+          { role: "system", content: system },
+          ...(history || []),
+          { role: "user", content: message },
+        ];
+        let rounds = 0;
+        while (rounds++ < 4) {
+          const tools = pyAgentsToolDefs();
+          const body = {
+            model: model || loadSettings().model || DEFAULT_MODEL,
+            messages,
+            max_tokens: 800,
+            ...(tools.length ? { tools, tool_choice: "auto" } : {}),
+          };
+          const r = await fetch(activeChatUrl(), {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok },
+            body: JSON.stringify(body),
+          });
+          if (r.status === 401) { clearAuthState(); throw new Error("Sign-in expired — sign in again."); }
+          if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0,200)}`);
+          const d = await r.json();
+          const msg = d.choices && d.choices[0] && d.choices[0].message;
+          if (!msg) break;
+          if (msg.tool_calls && msg.tool_calls.length) {
+            messages.push({ role: "assistant", content: msg.content || null, tool_calls: msg.tool_calls });
+            for (const tc of msg.tool_calls) {
+              let args = {};
+              try { args = JSON.parse(tc.function.arguments || "{}"); } catch {}
+              const out = (await dispatchPyodideToolCall(tc.function.name, args)) ||
+                          `agent '${tc.function.name}' is not loaded`;
+              messages.push({ role: "tool", tool_call_id: tc.id, content: out });
+              if (typeof onAgentLog === "function") {
+                try { onAgentLog({ name: tc.function.name, args, output: out }); } catch {}
+              }
+            }
+            continue;
+          }
+          // Final text — split on |||VOICE||| (matches the canonical brainstem).
+          const content = msg.content || "";
+          let assistant_response = content, voice_response = null;
+          const split = content.split("|||VOICE|||");
+          if (split.length === 2) { assistant_response = split[0].trim(); voice_response = split[1].trim(); }
+          return { assistant_response, voice_response };
+        }
+        return { assistant_response: "(stopped after 4 tool-call rounds)", voice_response: null };
       }
 
       return { loadSettings, saveSettings, getToken, clearAuthState,
                startDeviceLogin, pollDeviceLogin, copilotExchange,
                ensureCopilotToken, loadIdentity, buildSystemPrompt, chat,
+               initPyodide, pyAgentsToolDefs, dispatchPyodideToolCall,
+               get pyAgents() { return pyAgents; },
+               get pyodide() { return pyodide; },
                AUTH_WORKER_URL, COPILOT_CLIENT_ID };
     })();
     </script>
@@ -4730,6 +4952,10 @@
                 if (this.seedLoaded) return this.seedLoaded;
                 this.seedLoaded = await window.RAPP.Doorman.loadIdentity();
                 this.systemPrompt = window.RAPP.Doorman.buildSystemPrompt(this.seedLoaded);
+                // Kick Pyodide + canonical agents in the background so the
+                // first chat turn already has tools available. Non-blocking;
+                // chat() will await this only when it's actually called.
+                window.RAPP.Doorman.initPyodide({ ascended: false }).catch(() => {});
                 const id = this.seedLoaded.identity || {};
                 const name = id.display_name || id.name || "Front door";
                 const titleEl = document.getElementById('world-title');
@@ -5092,15 +5318,23 @@
             async sendToAPI(message) {
                 // Lazy-load identity if user just signed in mid-session.
                 if (!this.systemPrompt) await this.ensureSeedLoaded();
-                // Map this.conversationHistory (already in {role, content}
-                // shape) directly into the chat call. RAPP.Doorman returns
-                // { assistant_response, voice_response } already split on
-                // the |||VOICE||| delimiter — same shape the legacy Azure
-                // Function returned, so the caller doesn't need changes.
+                // RAPP.Doorman.chat runs the full tool-call loop (Pyodide
+                // agents) and returns { assistant_response, voice_response }
+                // — same shape the legacy Azure Function returned, so the
+                // sphere's reply rendering needs no changes.
                 return window.RAPP.Doorman.chat({
                     message,
                     history: this.conversationHistory,
                     system: this.systemPrompt,
+                    onAgentLog: (log) => {
+                        // Surface tool-call activity as a quiet system note —
+                        // matches the canonical brainstem's agent_logs pattern.
+                        if (this.addMessage) {
+                            const pretty = String(log.name || 'tool')
+                                .replace(/([a-z])([A-Z])/g, '$1 $2');
+                            this.addMessage(`✦ ${pretty}`, 'system');
+                        }
+                    },
                 });
             }
 
