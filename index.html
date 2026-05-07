@@ -1673,16 +1673,22 @@
 
         <!-- General Settings -->
         <div class="settings-section active" id="general-settings">
+            <!-- The legacy "API Configuration" panel is replaced by the
+                 implicit-summon flow. The doorman runs on your GitHub
+                 Copilot subscription via the same auth worker the
+                 canonical brainstem uses — no key paste, no endpoint
+                 to configure. Sign-in status is shown here so an
+                 already-authed visitor can see who they're auth'd as
+                 + sign out. Hidden inputs preserved for backward compat
+                 with the underlying settings serializer. -->
             <div class="settings-group">
-                <h3>API Configuration</h3>
-                <div class="setting-item">
-                    <label for="settings-api-key">API Key</label>
-                    <input type="password" id="settings-api-key" placeholder="Enter your API key">
+                <h3>Doorman</h3>
+                <div class="setting-item" id="rapp-signin-status" style="font-size:13px;color:#9aa6b3;line-height:1.55;">
+                    Tap the sphere to summon the doorman. One-time GitHub Copilot device-code sign-in. No API key paste.
                 </div>
-                <div class="setting-item">
-                    <label for="settings-endpoint">API Endpoint</label>
-                    <input type="text" id="settings-endpoint" value="https://azfbusinessbot.azurewebsites.net/api/businessinsightbot_function">
-                </div>
+                <button id="rapp-signout-btn" style="display:none;margin-top:10px;background:#21262d;border:1px solid #30363d;color:#c9d1d9;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;">Sign out</button>
+                <input type="password" id="settings-api-key" style="display:none;">
+                <input type="text" id="settings-endpoint" style="display:none;">
             </div>
 
             <div class="settings-group">
@@ -3298,6 +3304,36 @@
                     this.openSettings();
                 });
 
+                // Sign-in status updater — call after auth state changes
+                // so the settings panel shows "Signed in as @login" and
+                // exposes a sign-out button.
+                const updateSigninStatus = () => {
+                  const ghu = window.RAPP && window.RAPP.Doorman && window.RAPP.Doorman.getToken();
+                  const statusEl = document.getElementById('rapp-signin-status');
+                  const signoutBtn = document.getElementById('rapp-signout-btn');
+                  if (!statusEl) return;
+                  if (ghu) {
+                    const u = window.RAPP.Doorman.loadSettings().ghUser;
+                    statusEl.textContent = (u && u.login) ? `Signed in as @${u.login}` : 'Signed in to GitHub Copilot';
+                    statusEl.style.color = '#3fb950';
+                    if (signoutBtn) signoutBtn.style.display = 'inline-block';
+                  } else {
+                    statusEl.textContent = 'Tap the sphere to summon the doorman. One-time GitHub Copilot device-code sign-in. No API key paste.';
+                    statusEl.style.color = '#9aa6b3';
+                    if (signoutBtn) signoutBtn.style.display = 'none';
+                  }
+                };
+                updateSigninStatus();
+                window.addEventListener('focus', updateSigninStatus);
+
+                {
+                  const signoutBtn = document.getElementById('rapp-signout-btn');
+                  if (signoutBtn) signoutBtn.addEventListener('click', () => {
+                    window.RAPP.Doorman.clearAuthState();
+                    location.reload();
+                  });
+                }
+
                 // Details (ⓘ) — overlays the classic front door (trade
                 // card, neighborhood pane, install) in an iframe on top
                 // of the sphere. Sphere keeps running underneath; close
@@ -4551,6 +4587,11 @@
             }
 
             async checkCachedApiKey() {
+                // Always load identity first (public, no auth needed) so
+                // the headline reads "HEIMDALL" not "AI COMPANION HUB"
+                // even for anonymous visitors who haven't summoned yet.
+                try { await this.ensureSeedLoaded(); } catch (e) { console.warn("[doorman] identity load:", e.message); }
+
                 // Sphere is implicitly the doorman — if a Copilot session
                 // exists in localStorage from any prior brainstem sign-in
                 // on this origin (device-code flow), activate immediately.
@@ -4560,7 +4601,6 @@
                     return;
                 }
                 try {
-                    await this.ensureSeedLoaded();
                     await window.RAPP.Doorman.ensureCopilotToken();
                     this.isActive = true;
                     this.companionButton.classList.add('active');
@@ -4577,11 +4617,24 @@
 
             // Load the planted seed's identity (rappid + soul + memory) once
             // per session. Used by both checkCachedApiKey (boot path) and
-            // sendToAPI (lazy load if user signs in mid-session).
+            // sendToAPI (lazy load if user signs in mid-session). Also
+            // stamps the page title + the big H1 + subtitle from the
+            // seed's display_name + kind so the sphere reads as the
+            // organism, not "AI Companion Hub".
             async ensureSeedLoaded() {
                 if (this.seedLoaded) return this.seedLoaded;
                 this.seedLoaded = await window.RAPP.Doorman.loadIdentity();
                 this.systemPrompt = window.RAPP.Doorman.buildSystemPrompt(this.seedLoaded);
+                const id = this.seedLoaded.identity || {};
+                const name = id.display_name || id.name || "Front door";
+                const titleEl = document.getElementById('world-title');
+                const descEl  = document.getElementById('world-description');
+                if (titleEl) titleEl.textContent = name.toUpperCase();
+                if (descEl) {
+                    if (id.location) descEl.textContent = `📍 ${id.location} · tap the sphere to summon`;
+                    else descEl.textContent = `tap the sphere to summon ${name}`;
+                }
+                document.title = name + ' — RAPP front door';
                 return this.seedLoaded;
             }
 
@@ -5700,14 +5753,15 @@
                         if (this.aiManager.isActive) {
                             // Open chat interface
                             document.getElementById('ai-chat-interface').classList.add('active');
-                            
-                            // Broadcast AI interaction in show mode
                             if (this.showModeManager && this.showModeManager.isHost) {
                                 this.showModeManager.broadcastAIInteraction('chat_opened');
                             }
                         } else {
-                            // Open settings panel
-                            document.getElementById('settings-panel').classList.add('active');
+                            // Implicit summon — same handler the floating
+                            // companion-button uses. Tap the orb in 3D
+                            // space → device-code sign-in modal opens.
+                            // No API-key panel.
+                            this.aiManager.summonDoorman();
                         }
                         break;
                     }
