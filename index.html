@@ -2103,40 +2103,195 @@
                encodeURIComponent(s.copilotEndpoint || COPILOT_DEFAULT_API);
       }
 
-      // ── Identity loader — fetches the planted seed's public state ──
-      // Defaults to current origin (./rappid.json). Override with
-      // ?seed=<owner>/<repo> to summon a different seed.
+      // ── Identity loader — fetches the planted seed's public state, plus
+      //    silent-escalates to private companion / operator fallback when
+      //    the visitor's GitHub token has ascended access. Mirrors the
+      //    canonical loadIdentity + loadPrivateContext in installer/plant.sh.
+      //    Returns: { identity, soul, memory, privateSoul, privateContext,
+      //               privateFacts[], isAscended, viewerLogin, base }
       async function loadIdentity() {
         let base = "./";
+        let seedCoords = null;
         const params = new URLSearchParams(location.search);
-        const seed = params.get("seed");
-        if (seed && /^[^/]+\/[^/]+$/.test(seed)) {
-          base = `https://raw.githubusercontent.com/${seed}/main/`;
+        const seedParam = params.get("seed");
+        if (seedParam && /^[^/]+\/[^/]+$/.test(seedParam)) {
+          base = `https://raw.githubusercontent.com/${seedParam}/main/`;
+          const [o, r] = seedParam.split("/");
+          seedCoords = { owner: o, repo: r };
+        } else {
+          // Derive owner/repo from current location (<owner>.github.io/<repo>/)
+          const host = location.host || "";
+          const owner = host.split(".")[0];
+          const repo = (location.pathname.split("/").filter(Boolean)[0]) || "";
+          if (owner && repo) seedCoords = { owner, repo };
         }
+        // Public state (anyone, no auth)
         let identity = null, soul = "", memory = null;
         try { identity = await (await fetch(base + "rappid.json", {cache:"no-cache"})).json(); } catch {}
         try { soul     = await (await fetch(base + "soul.md",     {cache:"no-cache"})).text(); } catch {}
         try { memory   = await (await fetch(base + ".brainstem_data/memory.json", {cache:"no-cache"})).json(); } catch {}
-        return { identity, soul, memory, base };
+        if (!memory || !Array.isArray(memory.facts)) memory = { schema:"rapp-memory/1.0", facts: [] };
+
+        // Identify viewer (who's signed in) for per-user issue memory.
+        const token = getToken();
+        let viewerLogin = null;
+        if (token) {
+          try {
+            const r = await fetch("https://api.github.com/user", {
+              headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json" },
+            });
+            if (r.ok) {
+              const u = await r.json();
+              if (u && u.login) {
+                viewerLogin = u.login;
+                saveSettings({ ghUser: { login: u.login, avatar: u.avatar_url || "" } });
+              }
+            }
+          } catch {}
+        }
+
+        // ── Ascended escalation: private_companion (if configured) OR
+        //    operator fallback (push access to the seed itself). Same
+        //    silent-escalation pattern as plant.sh's loadPrivateContext. ─
+        let privateSoul = null, privateContext = "", privateFacts = [];
+        let isAscended = false, isOperator = false;
+        let privateLayer = null;
+
+        // Resolve private layer coords.
+        if (token && identity) {
+          if (identity.private_companion && identity.private_companion.repo) {
+            const m = identity.private_companion.repo.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?\/?$/);
+            if (m) privateLayer = { owner: m[1], repo: m[2] };
+          }
+          if (!privateLayer && seedCoords) {
+            // Operator fallback — visitor has push access to the seed itself.
+            try {
+              const r = await fetch(`https://api.github.com/repos/${seedCoords.owner}/${seedCoords.repo}`, {
+                headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json" },
+              });
+              if (r.ok) {
+                const data = await r.json();
+                if (data.permissions && data.permissions.push) {
+                  privateLayer = seedCoords;
+                  isOperator = true;
+                }
+              }
+            } catch {}
+          }
+        }
+
+        async function fetchPrivateFile(c, path) {
+          try {
+            const url = `https://api.github.com/repos/${c.owner}/${c.repo}/contents/` +
+                        path.split("/").map(encodeURIComponent).join("/");
+            const r = await fetch(url, {
+              headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.github.raw+json" },
+            });
+            if (!r.ok) return null;
+            return await r.text();
+          } catch { return null; }
+        }
+
+        if (privateLayer && token) {
+          // soul.md FIRST — promotes doorman to ascended voice.
+          const sText = await fetchPrivateFile(privateLayer, "soul.md");
+          if (sText && sText.trim()) privateSoul = sText.trim().slice(0, 8000);
+          // Supporting prose — README, vault entrypoint
+          for (const path of ["README.md", "vault/00 Index/Home.md"]) {
+            if (privateContext.length >= 4000) break;
+            const text = await fetchPrivateFile(privateLayer, path);
+            if (text) privateContext = (privateContext + "\n\n" + text).trim().slice(0, 4000);
+          }
+          // Private memory — both candidate paths.
+          for (const path of ["memory.json", ".brainstem_data/memory.json"]) {
+            const text = await fetchPrivateFile(privateLayer, path);
+            if (!text) continue;
+            try {
+              const j = JSON.parse(text);
+              if (Array.isArray(j.facts)) {
+                for (const f of j.facts) {
+                  if (typeof f === "string" && f.trim()) privateFacts.push("[private] " + f.trim());
+                }
+              }
+            } catch {}
+          }
+          // Per-user GitHub Issues (label: private-memory) — operator's
+          // own issue notes + collaborators' ascended saves.
+          if (viewerLogin) {
+            try {
+              const r = await fetch(
+                `https://api.github.com/repos/${privateLayer.owner}/${privateLayer.repo}/issues?creator=${encodeURIComponent(viewerLogin)}&labels=private-memory&state=all&per_page=50`,
+                { headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json" } }
+              );
+              if (r.ok) {
+                const issues = await r.json();
+                if (Array.isArray(issues)) {
+                  for (const iss of issues) {
+                    const body = (iss.body || "").trim();
+                    if (body) privateFacts.push(`[@${viewerLogin}] ${body.slice(0, 500)}`);
+                  }
+                }
+              }
+            } catch {}
+          }
+          // Operator fallback fills privateSoul from publicSoul if needed
+          // so the ascension gate fires (the operator IS the brain).
+          if (isOperator && !privateSoul && soul && soul.trim()) {
+            privateSoul = soul.trim().slice(0, 8000);
+          }
+          isAscended = !!privateSoul;
+          // Merge private facts into the running memory list
+          for (const f of privateFacts) memory.facts.push(f);
+        }
+
+        return { identity, soul, memory, privateSoul, privateContext,
+                 privateFacts, isAscended, isOperator, viewerLogin,
+                 privateLayer, base };
       }
 
-      // ── System prompt builder — mirrors the doorman's persona logic ─
+      // ── System prompt builder — mirrors the doorman's persona logic.
+      //    Ascended visitors (privateSoul present) get the full twin's
+      //    voice; everyone else gets the public soul; falls back to a
+      //    kind-aware default. Memory facts (public + [private] +
+      //    [@viewer]) all surface so the LLM can reference them. ─
       function buildSystemPrompt(loaded) {
         const id = loaded.identity || {};
         const name = id.display_name || id.name || "this front door";
         const lines = [];
-        if (loaded.soul && loaded.soul.trim()) {
+        if (loaded.privateSoul) {
+          // ASCENDED MODE — visitor has access to the private layer.
+          lines.push(loaded.privateSoul);
+          lines.push("");
+          lines.push("---");
+          const url = id.url || `https://${id.github || "this"}.github.io/${id.name || ""}`;
+          lines.push(`=== Context: you are speaking through your 3D sphere front door at ${url}. The visitor has authenticated and proven access to your private brain — speak in full voice. ===`);
+        } else if (loaded.soul && loaded.soul.trim()) {
+          // PUBLIC SOUL MODE — seed has a custom soul.md.
           lines.push(loaded.soul);
           lines.push("---");
-          lines.push(`=== Context: you are speaking through your front door at ${id.url || location.origin}. The visitor is interacting via the 3D sphere companion. ===`);
+          lines.push(`=== Context: you are speaking through your 3D sphere front door at ${id.url || location.origin}. This is the seed's public voice; visitors of every tier hear it. ===`);
         } else {
+          // DOORMAN MODE — kind-aware default.
           lines.push(`You are "${name}", a RAPP front door. Speak in first person — visitors come here to interact with you directly. Keep replies conversational and short — 2 to 4 sentences unless the visitor asks for depth.`);
+        }
+        if (loaded.privateContext) {
+          lines.push("");
+          lines.push("=== Supporting context (from private companion) ===");
+          lines.push(loaded.privateContext);
+          lines.push("=== End context ===");
         }
         if (loaded.memory && Array.isArray(loaded.memory.facts) && loaded.memory.facts.length) {
           lines.push("");
           lines.push("=== Known facts about this place ===");
           loaded.memory.facts.forEach((f, i) => lines.push(`${i+1}. ${f}`));
           lines.push("=== End facts ===");
+        }
+        // Tool-call guidance — same shape the canonical doorman uses.
+        lines.push("");
+        if (loaded.viewerLogin) {
+          lines.push(`The visitor is signed in as @${loaded.viewerLogin}. When they share something they expect you to remember, call ManageMemory immediately. Pass user_guid="${loaded.viewerLogin}" if the memory is personal to them. Don't say "I'll remember that" without actually calling the tool.`);
+        } else {
+          lines.push(`The visitor is not signed in. When they share something they expect you to remember, call ManageMemory — it'll save to their browser's local storage on this device only. Don't say "I'll remember that" without actually calling the tool.`);
         }
         // Voice slot: emit a |||VOICE||| block on substantive turns so
         // the sphere can speak a clean one-line version of the reply.
@@ -4952,10 +5107,16 @@ _r if isinstance(_r, str) else json.dumps(_r)
                 if (this.seedLoaded) return this.seedLoaded;
                 this.seedLoaded = await window.RAPP.Doorman.loadIdentity();
                 this.systemPrompt = window.RAPP.Doorman.buildSystemPrompt(this.seedLoaded);
-                // Kick Pyodide + canonical agents in the background so the
-                // first chat turn already has tools available. Non-blocking;
-                // chat() will await this only when it's actually called.
-                window.RAPP.Doorman.initPyodide({ ascended: false }).catch(() => {});
+                // Kick Pyodide + canonical agents in the background. Pass
+                // ascended flag so LearnNew + SwarmFactory load when the
+                // visitor has private-layer access.
+                const ascended = !!this.seedLoaded.isAscended;
+                window.RAPP.Doorman.initPyodide({ ascended }).catch(() => {});
+                if (ascended) {
+                    console.info('[doorman] ASCENDED — privateSoul + ' +
+                        (this.seedLoaded.privateFacts || []).length + ' private facts loaded' +
+                        (this.seedLoaded.viewerLogin ? ' for @' + this.seedLoaded.viewerLogin : ''));
+                }
                 const id = this.seedLoaded.identity || {};
                 const name = id.display_name || id.name || "Front door";
                 const titleEl = document.getElementById('world-title');
