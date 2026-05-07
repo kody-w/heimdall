@@ -1717,11 +1717,19 @@
                     <div class="toggle-switch" id="settings-auto-speak"></div>
                 </div>
                 <div class="setting-item">
-                    <label for="settings-azure-tts-key">Azure TTS API Key</label>
+                    <label for="settings-elevenlabs-key">ElevenLabs API Key <span style="font-size:11px;color:#6e7681;font-weight:normal;">(premium voice — overrides Azure when set)</span></label>
+                    <input type="password" id="settings-elevenlabs-key" placeholder="sk_…   paste your ElevenLabs key for cinematic voice">
+                </div>
+                <div class="setting-item">
+                    <label for="settings-elevenlabs-voice-id">ElevenLabs Voice ID <span style="font-size:11px;color:#6e7681;font-weight:normal;">(optional — leave blank for warm default)</span></label>
+                    <input type="text" id="settings-elevenlabs-voice-id" placeholder="e.g. EXAVITQu4vr4xnSDxMaL (Sarah)">
+                </div>
+                <div class="setting-item">
+                    <label for="settings-azure-tts-key">Azure TTS API Key <span style="font-size:11px;color:#6e7681;font-weight:normal;">(alternative premium provider)</span></label>
                     <input type="password" id="settings-azure-tts-key" placeholder="Enter Azure TTS key for premium voices">
                 </div>
                 <div class="setting-item">
-                    <label for="settings-tts-voice">TTS Voice</label>
+                    <label for="settings-tts-voice">Azure TTS Voice</label>
                     <select id="settings-tts-voice">
                         <option value="en-US-JennyNeural">Jenny (Female)</option>
                         <option value="en-US-GuyNeural">Guy (Male)</option>
@@ -3253,13 +3261,15 @@
                     voice: {
                         output: {
                             enabled: true,
-                            autoSpeak: false,
+                            autoSpeak: true,
                             azureTTSKey: '',
+                            elevenLabsKey: '',
+                            elevenLabsVoiceId: '',
                             ttsVoiceName: 'en-US-JennyNeural'
                         },
                         input: {
                             enabled: true,
-                            continuousConversation: false,
+                            continuousConversation: true,
                             pushToTalkKey: 'Space'
                         }
                     },
@@ -3370,6 +3380,8 @@
                 this.setupInputField('settings-api-key', 'api.key');
                 this.setupInputField('settings-endpoint', 'api.endpoint');
                 this.setupInputField('settings-azure-tts-key', 'voice.output.azureTTSKey');
+                this.setupInputField('settings-elevenlabs-key', 'voice.output.elevenLabsKey');
+                this.setupInputField('settings-elevenlabs-voice-id', 'voice.output.elevenLabsVoiceId');
                 this.setupInputField('world-name', 'world.name');
                 this.setupInputField('world-description', 'world.description');
 
@@ -3451,6 +3463,8 @@
                 this.loadInputField('settings-api-key', 'api.key');
                 this.loadInputField('settings-endpoint', 'api.endpoint');
                 this.loadInputField('settings-azure-tts-key', 'voice.output.azureTTSKey');
+                this.loadInputField('settings-elevenlabs-key', 'voice.output.elevenLabsKey');
+                this.loadInputField('settings-elevenlabs-voice-id', 'voice.output.elevenLabsVoiceId');
                 this.loadInputField('world-name', 'world.name');
                 this.loadInputField('world-description', 'world.description');
 
@@ -4031,10 +4045,12 @@
             constructor() {
                 this.synthesis = window.speechSynthesis;
                 this.enabled = true;
-                this.autoSpeak = false;
+                this.autoSpeak = true;          // Conversation mode default ON.
                 this.isSpeaking = false;
                 this.azureKey = '';
                 this.azureRegion = 'eastus2';
+                this.elevenLabsKey = '';        // Premium voice (Article XLIII carve-out).
+                this.elevenLabsVoiceId = 'EXAVITQu4vr4xnSDxMaL'; // ElevenLabs "Sarah" — warm default.
                 this.voiceName = 'en-US-JennyNeural';
                 this.isSdkLoaded = false;
                 this.speechSynthesizer = null;
@@ -4079,6 +4095,14 @@
                 this.azureKey = key;
             }
 
+            setElevenLabsKey(key) {
+                this.elevenLabsKey = key;
+            }
+
+            setElevenLabsVoiceId(voiceId) {
+                if (voiceId) this.elevenLabsVoiceId = voiceId;
+            }
+
             setVoiceName(voiceName) {
                 this.voiceName = voiceName;
             }
@@ -4102,7 +4126,14 @@
                     aiManager.world.showModeManager.broadcastVoiceActivity('speaking');
                 }
                 
-                if (this.azureKey && this.isSdkLoaded && window.SpeechSDK) {
+                // Dispatch order: ElevenLabs (if key) → Azure (if key + SDK) → Browser.
+                // ElevenLabs first because operators who set both clearly
+                // prefer it; Azure next because the SDK is heavier to spin
+                // up; browser TTS as the always-available baseline.
+                if (this.elevenLabsKey) {
+                    try { await this.speakWithElevenLabs(cleanText, aiManager); }
+                    catch (e) { console.warn('[ElevenLabs] falling back:', e.message); await this.speakWithBrowser(cleanText, aiManager); }
+                } else if (this.azureKey && this.isSdkLoaded && window.SpeechSDK) {
                     await this.speakWithAzure(cleanText, aiManager);
                 } else {
                     await this.speakWithBrowser(cleanText, aiManager);
@@ -4112,6 +4143,51 @@
                 if (aiManager && aiManager.world.showModeManager && aiManager.world.showModeManager.isHost) {
                     aiManager.world.showModeManager.broadcastVoiceActivity('idle');
                 }
+            }
+
+            async speakWithElevenLabs(text, aiManager = null) {
+                if (this.isPaused) return;
+                const truncated = text.length > this.maxCharacters
+                    ? text.substring(0, this.maxCharacters) + '... (truncated)'
+                    : text;
+                const url = `https://api.elevenlabs.io/v1/text-to-speech/${this.elevenLabsVoiceId}?output_format=mp3_44100_128`;
+                const r = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'xi-api-key': this.elevenLabsKey,
+                        'Content-Type': 'application/json',
+                        'Accept': 'audio/mpeg',
+                    },
+                    body: JSON.stringify({
+                        text: truncated,
+                        model_id: 'eleven_turbo_v2_5',
+                        voice_settings: { stability: 0.55, similarity_boost: 0.8, style: 0.0, use_speaker_boost: true },
+                    }),
+                });
+                if (!r.ok) throw new Error(`ElevenLabs ${r.status}: ${(await r.text()).slice(0,160)}`);
+                const blob = await r.blob();
+                const audioUrl = URL.createObjectURL(blob);
+                const audio = new Audio(audioUrl);
+                this.isSpeaking = true;
+                document.getElementById('voice-indicator').classList.add('active');
+                this._currentElevenAudio = audio;
+                await new Promise((resolve) => {
+                    audio.onended = audio.onerror = () => {
+                        this.isSpeaking = false;
+                        document.getElementById('voice-indicator').classList.remove('active');
+                        URL.revokeObjectURL(audioUrl);
+                        this._currentElevenAudio = null;
+                        resolve();
+                    };
+                    audio.play().catch((e) => {
+                        console.warn('[ElevenLabs] play() blocked:', e.message);
+                        this.isSpeaking = false;
+                        document.getElementById('voice-indicator').classList.remove('active');
+                        URL.revokeObjectURL(audioUrl);
+                        this._currentElevenAudio = null;
+                        resolve();
+                    });
+                });
             }
 
             async speakWithAzure(text, aiManager = null) {
@@ -4254,6 +4330,11 @@
                     } catch (e) {
                         console.warn("Error canceling speech synthesis:", e);
                     }
+                }
+
+                if (this._currentElevenAudio) {
+                    try { this._currentElevenAudio.pause(); } catch {}
+                    this._currentElevenAudio = null;
                 }
 
                 this.isSpeaking = false;
@@ -4483,6 +4564,8 @@
                         voiceEnabled: allSettings.voice.output.enabled,
                         autoSpeak: allSettings.voice.output.autoSpeak,
                         azureTTSKey: allSettings.voice.output.azureTTSKey,
+                        elevenLabsKey: allSettings.voice.output.elevenLabsKey || '',
+                        elevenLabsVoiceId: allSettings.voice.output.elevenLabsVoiceId || '',
                         ttsVoiceName: allSettings.voice.output.ttsVoiceName,
                         voiceInputEnabled: allSettings.voice.input.enabled,
                         continuousConversation: allSettings.voice.input.continuousConversation,
@@ -4493,11 +4576,13 @@
                 const settings = localStorage.getItem('nexusAISettings');
                 return settings ? JSON.parse(settings) : {
                     voiceEnabled: true,
-                    autoSpeak: false,
+                    autoSpeak: true,
                     azureTTSKey: '',
+                    elevenLabsKey: '',
+                    elevenLabsVoiceId: '',
                     ttsVoiceName: 'en-US-JennyNeural',
                     voiceInputEnabled: true,
-                    continuousConversation: false,
+                    continuousConversation: true,
                     pushToTalkKey: 'Space'
                 };
             }
@@ -4535,6 +4620,8 @@
                 this.voiceManager.setEnabled(this.settings.voiceEnabled);
                 this.voiceManager.setAutoSpeak(this.settings.autoSpeak);
                 this.voiceManager.setAzureKey(this.settings.azureTTSKey);
+                this.voiceManager.setElevenLabsKey(this.settings.elevenLabsKey || '');
+                this.voiceManager.setElevenLabsVoiceId(this.settings.elevenLabsVoiceId || '');
                 this.voiceManager.setVoiceName(this.settings.ttsVoiceName);
 
                 if (this.voiceInputManager) {
