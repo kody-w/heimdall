@@ -900,8 +900,10 @@
         /* Listening Indicator */
         .listening-indicator {
             position: fixed;
-            top: 80px;
-            right: 20px;
+            /* Sits BELOW the voice-pause-button (which is at top+60 to top+110)
+               so they stack vertically on the right edge instead of colliding. */
+            top: calc(env(safe-area-inset-top, 20px) + 130px);
+            right: calc(env(safe-area-inset-right, 20px));
             background: rgba(255, 0, 110, 0.9);
             color: white;
             padding: 10px 20px;
@@ -1952,14 +1954,29 @@
     <!-- Identity / details button — voice-first mode keeps the sphere
          clean; tap this to overlay the classic front door (trade card,
          neighborhood pane, install, plant) on top of the sphere via
-         iframe. Tap × to dismiss; sphere chat state is preserved. -->
-    <div class="settings-button" id="details-button" style="right:90px;" title="Identity, neighborhood, share card">
+         iframe. Tap × to dismiss; sphere chat state is preserved.
+         Positioned above the settings button (where show-mode used to
+         live; show-mode itself is hidden — see CSS overrides below). -->
+    <div class="settings-button" id="details-button" style="bottom: calc(env(safe-area-inset-bottom, 30px) + 240px);" title="Identity, neighborhood, share card">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="16" x2="12" y2="12"></line>
             <line x1="12" y1="8" x2="12.01" y2="8"></line>
         </svg>
     </div>
+
+    <!-- Doorman experience — declutter the legacy AI Companion Hub
+         button stack. Hide buttons that don't fit a doorman:
+           • show-mode (presentation broadcast)  — irrelevant
+           • tasks (task panel)                  — irrelevant
+           • ai-companion-button (star)          — redundant; the
+             3D sphere is the chat affordance.
+         Keep: details (ⓘ), settings (gear), voice-pause/mic. -->
+    <style>
+      .show-mode-button,
+      .tasks-button,
+      .ai-companion-button { display: none !important; }
+    </style>
 
     <!-- Classic-front-door iframe overlay. Loads ./classic.html (the
          flat front door with trade card, 🏘 Neighborhood, install widget,
