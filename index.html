@@ -3248,7 +3248,25 @@
             loadAllSettings() {
                 const stored = localStorage.getItem('aiCompanionAllSettings');
                 if (stored) {
-                    return JSON.parse(stored);
+                    const parsed = JSON.parse(stored);
+                    // One-time migration to conversation-mode defaults.
+                    // Pre-RAPP localStorage saved autoSpeak=false +
+                    // continuousConversation=false; flip both to true so
+                    // existing visitors get the doorman speaking back
+                    // automatically without having to dig in settings.
+                    // Marker (rappVoiceMigrationV2) prevents repeats.
+                    if (!parsed.rappVoiceMigrationV2) {
+                        if (parsed.voice && parsed.voice.output) parsed.voice.output.autoSpeak = true;
+                        if (parsed.voice && parsed.voice.input)  parsed.voice.input.continuousConversation = true;
+                        // Backfill new fields for users with older shape
+                        if (parsed.voice && parsed.voice.output) {
+                            if (parsed.voice.output.elevenLabsKey === undefined) parsed.voice.output.elevenLabsKey = '';
+                            if (parsed.voice.output.elevenLabsVoiceId === undefined) parsed.voice.output.elevenLabsVoiceId = '';
+                        }
+                        parsed.rappVoiceMigrationV2 = true;
+                        try { localStorage.setItem('aiCompanionAllSettings', JSON.stringify(parsed)); } catch {}
+                    }
+                    return parsed;
                 }
 
                 return {
@@ -4725,11 +4743,28 @@
                 return this.seedLoaded;
             }
 
+            // iOS Safari quirk: speechSynthesis is silenced until the
+            // browser sees an utterance fired from a real user-gesture
+            // call stack. Run a near-silent priming utterance the first
+            // time the user taps the sphere so subsequent auto-speaks
+            // (which run inside async chat callbacks) can play. Idempotent.
+            primeSpeechSynthesis() {
+                if (this._speechPrimed) return;
+                this._speechPrimed = true;
+                try {
+                    if (!window.speechSynthesis) return;
+                    const u = new SpeechSynthesisUtterance(' ');
+                    u.volume = 0.01; u.rate = 1;
+                    window.speechSynthesis.speak(u);
+                } catch (_) {}
+            }
+
             // Implicit doorman summon — drives the device-code modal,
             // polls until the user authorizes on github.com/login/device,
             // then activates the sphere + opens chat. Single entry point
             // for "I tapped the inactive sphere; auth me + open the line."
             async summonDoorman() {
+                this.primeSpeechSynthesis();
                 const modal = document.getElementById('rapp-signin-modal');
                 const step1 = document.getElementById('rapp-signin-step1');
                 const step2 = document.getElementById('rapp-signin-step2');
@@ -5106,21 +5141,22 @@
                             content: response.assistant_response
                         });
 
-                        if (response.voice_response) {
-                            this.lastVoiceResponse = response.voice_response;
-                            this.animateTextResponse(response.voice_response);
-                            
-                            if (this.settings.autoSpeak && !this.voicePaused) {
-                                await this.voiceManager.speak(response.voice_response, this);
-                                
-                                if (this.settings.continuousConversation && this.voiceInputManager && !this.voicePaused) {
-                                    setTimeout(() => {
-                                        this.voiceInputManager.startListening();
-                                    }, 500);
-                                }
+                        // Pick what to speak: prefer the |||VOICE||| slot
+                        // when present (clean spoken line), fall back to
+                        // the full reply so a model that forgot the slot
+                        // still gets read aloud — same fallback contract
+                        // as RAPP.Voice.pickVoiceText in the canonical UI.
+                        const spokenText = response.voice_response || response.assistant_response;
+                        this.lastVoiceResponse = response.voice_response || null;
+                        this.animateTextResponse(response.voice_response || response.assistant_response);
+
+                        if (spokenText && this.settings.autoSpeak && !this.voicePaused) {
+                            await this.voiceManager.speak(spokenText, this);
+                            if (this.settings.continuousConversation && this.voiceInputManager && !this.voicePaused) {
+                                setTimeout(() => {
+                                    this.voiceInputManager.startListening();
+                                }, 500);
                             }
-                        } else {
-                            this.animateTextResponse(response.assistant_response);
                         }
                     }
                 } catch (error) {
