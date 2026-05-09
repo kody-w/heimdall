@@ -3652,7 +3652,7 @@ _r if isinstance(_r, str) else json.dumps(_r)
                     // Marker (rappVoiceMigrationV2) prevents repeats.
                     if (!parsed.rappVoiceMigrationV2) {
                         if (parsed.voice && parsed.voice.output) parsed.voice.output.autoSpeak = true;
-                        if (parsed.voice && parsed.voice.input)  parsed.voice.input.continuousConversation = true;
+                        // Voice off by default (operator opts in via Settings → Voice)
                         // Backfill new fields for users with older shape
                         if (parsed.voice && parsed.voice.output) {
                             if (parsed.voice.output.elevenLabsKey === undefined) parsed.voice.output.elevenLabsKey = '';
@@ -3682,7 +3682,7 @@ _r if isinstance(_r, str) else json.dumps(_r)
                         },
                         input: {
                             enabled: true,
-                            continuousConversation: true,
+                            continuousConversation: false,
                             pushToTalkKey: 'Space'
                         }
                     },
@@ -6409,5 +6409,30 @@ _r if isinstance(_r, str) else json.dumps(_r)
             lastY = y;
         }, { passive: false });
     </script>
+
+<!-- ── AUTO-SUMMON when ?seed=<owner>/<repo> is in the URL ───────────
+     The user already chose which twin to embody (via summon portal or
+     direct link). Skip the "tap to summon" wall — auto-fire the click. -->
+<script>
+(function() {
+  const params = new URLSearchParams(location.search);
+  if (!params.get("seed")) return;
+  // Wait for the page to settle (sphere render + identity load)
+  let tries = 0;
+  const tick = setInterval(() => {
+    tries++;
+    if (tries > 40) { clearInterval(tick); return; }  // give up after ~20s
+    const orb = document.getElementById("companion-button") || document.querySelector("[id*=companion]");
+    if (!orb) return;
+    // Wait until identity has loaded (world-title is no longer "AI COMPANION HUB")
+    const t = document.getElementById("world-title");
+    if (t && t.textContent === "AI COMPANION HUB") return;
+    clearInterval(tick);
+    setTimeout(() => {
+      try { orb.click(); } catch (e) { console.warn("[auto-summon] sphere click failed:", e); }
+    }, 600);
+  }, 500);
+})();
+</script>
 </body>
 </html>
