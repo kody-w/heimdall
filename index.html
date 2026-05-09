@@ -4199,6 +4199,8 @@ _r if isinstance(_r, str) else json.dumps(_r)
                 this.wasListeningBeforePause = false;
                 this.hardFailedCount = 0;       // consecutive network/service errors — cap to avoid infinite retry
                 this.giveUpRetries = false;     // set true after 3 hard errors; user must explicitly re-enable
+                this.azureRecognizer = null;    // Azure Speech SDK fallback for browsers where Web Speech is blocked (Edge tracking-prevention)
+                this.azureMode = false;         // true when running on Azure SDK instead of Web Speech
                 
                 this.initializeSpeechRecognition();
                 
@@ -4314,9 +4316,26 @@ _r if isinstance(_r, str) else json.dumps(_r)
                     if (HARD_ERRORS.indexOf(event.error) !== -1) {
                         this.hardFailedCount = (this.hardFailedCount || 0) + 1;
                         if (this.hardFailedCount >= 3) {
+                            // Web Speech API is blocked / unreachable. Try Azure Speech SDK fallback
+                            // BEFORE giving up entirely — works on Edge with tracking-prevention.
+                            const tryAzure = () => {
+                                const azureKey = this.aiManager && this.aiManager.voiceManager && this.aiManager.voiceManager.azureKey;
+                                const azureRegion = (this.aiManager && this.aiManager.voiceManager && this.aiManager.voiceManager.azureRegion) || 'eastus2';
+                                if (azureKey && window.SpeechSDK) {
+                                    console.warn('[voice] Web Speech failed 3x — switching to Microsoft Speech SDK fallback (Azure ' + azureRegion + ')');
+                                    this.showNotification('Voice: switched to Microsoft Speech SDK (Edge fallback)');
+                                    this.startAzureRecognition(azureKey, azureRegion);
+                                    return true;
+                                }
+                                return false;
+                            };
+                            if (tryAzure()) {
+                                this.hardFailedCount = 0;  // reset so future errors don't compound
+                                return;
+                            }
                             this.giveUpRetries = true;
                             console.warn('[voice] giving up speech recognition after 3 ' + event.error + ' errors. Tap voice button to retry.');
-                            this.showNotification('Voice recognition unavailable (' + event.error + '). Tap voice button to retry.');
+                            this.showNotification('Voice unavailable (' + event.error + '). Set Azure TTS key in Settings → Voice for Edge fallback, or use text input.');
                             return;
                         }
                     }
@@ -4333,6 +4352,10 @@ _r if isinstance(_r, str) else json.dumps(_r)
                             console.log('[voice] manual retry — clearing give-up state');
                             this.giveUpRetries = false;
                             this.hardFailedCount = 0;
+                        }
+                        // If currently in Azure mode, stop it so manual tap acts on Web Speech
+                        if (this.azureMode) {
+                            this.stopAzureRecognition();
                         }
                     });
                     if (isMobile) {
@@ -4404,6 +4427,11 @@ _r if isinstance(_r, str) else json.dumps(_r)
             }
 
             stopListening() {
+                // Azure mode → stop Azure recognizer instead
+                if (this.azureMode) {
+                    this.stopAzureRecognition();
+                    return;
+                }
                 if (!this.recognition || !this.isListening) {
                     return;
                 }
@@ -4421,6 +4449,98 @@ _r if isinstance(_r, str) else json.dumps(_r)
                     this.stopListening();
                 }
                 this.updateButtonState();
+            }
+
+            // ── Microsoft Speech SDK fallback (used when Web Speech API is blocked,
+            //    e.g. on Edge with tracking prevention enabled).
+            //    Reuses the same azureKey + azureRegion already configured for TTS.
+            startAzureRecognition(azureKey, azureRegion) {
+                if (this.azureMode && this.azureRecognizer) return;
+                if (!window.SpeechSDK) {
+                    console.warn('[voice] Microsoft Speech SDK not loaded yet');
+                    return;
+                }
+                try {
+                    const speechConfig = window.SpeechSDK.SpeechConfig.fromSubscription(azureKey, azureRegion);
+                    speechConfig.speechRecognitionLanguage = 'en-US';
+                    const audioConfig = window.SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+                    this.azureRecognizer = new window.SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+                    this.azureMode = true;
+
+                    // Live partial transcription → input field
+                    this.azureRecognizer.recognizing = (s, e) => {
+                        if (e.result && e.result.text) {
+                            const inp = document.getElementById('ai-chat-input');
+                            if (inp) inp.value = e.result.text;
+                        }
+                    };
+                    // Final transcription → send message
+                    this.azureRecognizer.recognized = (s, e) => {
+                        if (e.result && e.result.reason === window.SpeechSDK.ResultReason.RecognizedSpeech && e.result.text) {
+                            console.log('[voice/azure] final:', e.result.text);
+                            const inp = document.getElementById('ai-chat-input');
+                            if (inp) inp.value = e.result.text;
+                            this.aiManager.sendMessage();
+                        }
+                    };
+                    this.azureRecognizer.canceled = (s, e) => {
+                        console.warn('[voice/azure] canceled:', e.errorDetails || e.reason);
+                        this.stopAzureRecognition();
+                        // Don't auto-restart on cancel — let user explicitly re-enable
+                    };
+                    this.azureRecognizer.sessionStopped = () => {
+                        console.log('[voice/azure] session stopped');
+                        // In continuous mode, restart
+                        if (this.continuousMode && this.isEnabled && this.aiManager.isActive && !this.isPaused && !this.aiManager.voiceManager.isSpeaking) {
+                            setTimeout(() => {
+                                if (this.azureMode && this.azureRecognizer) {
+                                    this.azureRecognizer.startContinuousRecognitionAsync();
+                                }
+                            }, 500);
+                        }
+                    };
+
+                    this.azureRecognizer.startContinuousRecognitionAsync(
+                        () => {
+                            this.isListening = true;
+                            this.voiceInputBtn.classList.add('recording');
+                            this.listeningIndicator.classList.add('active');
+                            console.log('[voice/azure] started');
+                        },
+                        (err) => {
+                            console.error('[voice/azure] start failed:', err);
+                            this.azureMode = false;
+                            this.azureRecognizer = null;
+                            this.giveUpRetries = true;
+                            this.showNotification('Azure Speech failed to start: ' + err);
+                        }
+                    );
+                } catch (e) {
+                    console.error('[voice/azure] init failed:', e);
+                    this.azureMode = false;
+                    this.azureRecognizer = null;
+                    this.giveUpRetries = true;
+                    this.showNotification('Azure Speech init failed: ' + e.message);
+                }
+            }
+
+            stopAzureRecognition() {
+                if (!this.azureRecognizer) return;
+                try {
+                    this.azureRecognizer.stopContinuousRecognitionAsync(
+                        () => {
+                            this.isListening = false;
+                            this.voiceInputBtn.classList.remove('recording');
+                            this.listeningIndicator.classList.remove('active');
+                            if (this.azureRecognizer) {
+                                this.azureRecognizer.close();
+                                this.azureRecognizer = null;
+                            }
+                            this.azureMode = false;
+                        },
+                        (err) => { console.error('[voice/azure] stop failed:', err); }
+                    );
+                } catch (e) { console.error('[voice/azure] stop threw:', e); }
             }
 
             setContinuousMode(enabled) {
