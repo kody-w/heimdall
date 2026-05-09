@@ -4197,6 +4197,8 @@ _r if isinstance(_r, str) else json.dumps(_r)
                 this.isKeyPressed = false;
                 this.isPaused = false;
                 this.wasListeningBeforePause = false;
+                this.hardFailedCount = 0;       // consecutive network/service errors — cap to avoid infinite retry
+                this.giveUpRetries = false;     // set true after 3 hard errors; user must explicitly re-enable
                 
                 this.initializeSpeechRecognition();
                 
@@ -4243,7 +4245,11 @@ _r if isinstance(_r, str) else json.dumps(_r)
                         this.aiManager.world.showModeManager.broadcastVoiceActivity('idle');
                     }
                     
-                    // Only restart if continuous mode is enabled and not paused
+                    // Only restart if continuous mode is enabled, not paused, AND we
+                    // haven't given up after consecutive hard errors.
+                    if (this.giveUpRetries) {
+                        return;
+                    }
                     if (this.continuousMode && this.isEnabled && this.aiManager.isActive && !this.isPaused) {
                         setTimeout(() => {
                             if (!this.aiManager.voiceManager.isSpeaking && !this.isPaused) {
@@ -4274,6 +4280,9 @@ _r if isinstance(_r, str) else json.dumps(_r)
                         console.log('Final transcript:', finalTranscript);
                         document.getElementById('ai-chat-input').value = finalTranscript;
                         this.aiManager.sendMessage();
+                        // Successful result — reset hard-error counter
+                        this.hardFailedCount = 0;
+                        this.giveUpRetries = false;
                         
                         if (!this.continuousMode) {
                             this.stopListening();
@@ -4287,14 +4296,29 @@ _r if isinstance(_r, str) else json.dumps(_r)
                     this.voiceInputBtn.classList.remove('recording');
                     this.listeningIndicator.classList.remove('active');
                     
-                    // Ignore aborted errors when pausing
+                    // Ignore aborted (pause) + no-speech (just silence)
                     if (event.error === 'aborted') {
-                        console.log('Speech recognition aborted (likely due to pause)');
+                        console.log('Speech recognition aborted (pause)');
+                        return;
+                    }
+                    if (event.error === 'no-speech') {
                         return;
                     }
                     
-                    if (event.error === 'no-speech') {
-                        return;
+                    // CAP retries on hard errors (network, audio-capture, service-not-allowed).
+                    // Edge / aggressive tracking prevention often blocks the free speech endpoint;
+                    // looping forever burns battery + floods console. After 3 consecutive hard
+                    // errors, give up + show a one-time notification. User can re-enable via
+                    // voice button or by reloading.
+                    const HARD_ERRORS = ['network', 'audio-capture', 'service-not-allowed', 'not-allowed'];
+                    if (HARD_ERRORS.indexOf(event.error) !== -1) {
+                        this.hardFailedCount = (this.hardFailedCount || 0) + 1;
+                        if (this.hardFailedCount >= 3) {
+                            this.giveUpRetries = true;
+                            console.warn('[voice] giving up speech recognition after 3 ' + event.error + ' errors. Tap voice button to retry.');
+                            this.showNotification('Voice recognition unavailable (' + event.error + '). Tap voice button to retry.');
+                            return;
+                        }
                     }
                     
                     this.showNotification(`Speech recognition error: ${event.error}`);
@@ -4303,6 +4327,14 @@ _r if isinstance(_r, str) else json.dumps(_r)
 
             setupEventListeners() {
                 if (this.voiceInputBtn) {
+                    // Manual voice-button tap also resets the give-up flag
+                    this.voiceInputBtn.addEventListener('click', () => {
+                        if (this.giveUpRetries || this.hardFailedCount >= 3) {
+                            console.log('[voice] manual retry — clearing give-up state');
+                            this.giveUpRetries = false;
+                            this.hardFailedCount = 0;
+                        }
+                    });
                     if (isMobile) {
                         this.voiceInputBtn.addEventListener('touchstart', (e) => {
                             e.preventDefault();
