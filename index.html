@@ -3652,7 +3652,8 @@ _r if isinstance(_r, str) else json.dumps(_r)
                     // Marker (rappVoiceMigrationV2) prevents repeats.
                     if (!parsed.rappVoiceMigrationV2) {
                         if (parsed.voice && parsed.voice.output) parsed.voice.output.autoSpeak = true;
-                        if (parsed.voice && parsed.voice.input)  parsed.voice.input.continuousConversation = true;
+                        if (parsed.voice && parsed.voice.output) parsed.voice.output.enabled              = true;
+                    if (parsed.voice && parsed.voice.input)  parsed.voice.input.continuousConversation = true;
                         // Backfill new fields for users with older shape
                         if (parsed.voice && parsed.voice.output) {
                             if (parsed.voice.output.elevenLabsKey === undefined) parsed.voice.output.elevenLabsKey = '';
