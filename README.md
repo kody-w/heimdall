@@ -35,6 +35,23 @@ That installer is a thin wrapper that re-fetches the canonical kernel
 installer from the grail on every run — this front door cannot drift
 from the kernel.
 
+## Hatch Heimdall as a local twin
+
+Different goal — instead of installing a fresh brainstem, drop Heimdall
+into an *existing* brainstem as a twin under `~/.rapp/twins/<hash>/`.
+The global brainstem's built-in `Twin` agent can then boot, chat, and
+list this twin alongside any others.
+
+```
+curl -fsSL https://raw.githubusercontent.com/kody-w/heimdall/main/install.sh | bash
+python ./twin_egg_hatcher_agent.py hatch --source kody-w/heimdall
+```
+
+The hatcher itself is the generic
+[`kody-w/twin-egg-hatcher`](https://github.com/kody-w/twin-egg-hatcher).
+One hatcher serves every RAPP twin — this repo carries only Heimdall's
+identity (`rappid.json`, `soul.md`, `agents/`).
+
 ## Plant your own front door
 
 ```
