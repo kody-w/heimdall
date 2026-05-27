@@ -1676,8 +1676,8 @@
         <!-- General Settings -->
         <div class="settings-section active" id="general-settings">
             <!-- The legacy "API Configuration" panel is replaced by the
-                 implicit-summon flow. The doorman runs on your GitHub
-                 Copilot subscription via the same auth worker the
+                 implicit-summon flow. The doorman is powered by the GitHub
+                 Copilot CLI via the same auth worker the
                  canonical brainstem uses — no key paste, no endpoint
                  to configure. Sign-in status is shown here so an
                  already-authed visitor can see who they're auth'd as
@@ -2002,7 +2002,7 @@
         <div style="padding:22px;">
           <div id="rapp-signin-error" style="display:none;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);color:#f85149;padding:10px 12px;border-radius:8px;margin-bottom:14px;font-size:13px;"></div>
           <div id="rapp-signin-step1">
-            <p style="font-size:13px;color:#9aa6b3;margin-bottom:16px;line-height:1.55;">The doorman runs on your GitHub Copilot subscription — no API keys to paste, no setup. One-time device-code sign in, takes about 30 seconds.</p>
+            <p style="font-size:13px;color:#9aa6b3;margin-bottom:16px;line-height:1.55;">The doorman is powered by the GitHub Copilot CLI — no API keys to paste, no setup. One-time device-code sign in, takes about 30 seconds.</p>
             <button id="rapp-signin-go" style="background:#06ffa5;border:none;color:#000;border-radius:10px;padding:14px;width:100%;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;">Sign in with GitHub →</button>
           </div>
           <div id="rapp-signin-step2" style="display:none;">
@@ -2101,7 +2101,7 @@
         });
         if (!r.ok) throw new Error(`copilot exchange ${r.status}`);
         const d = await r.json();
-        if (!d.token) throw new Error("Copilot subscription required");
+        if (!d.token) throw new Error("Copilot returned no token (sign in with GitHub to continue)");
         saveSettings({
           copilotToken: d.token,
           copilotEndpoint: (d.endpoints && d.endpoints.api) || COPILOT_DEFAULT_API,
