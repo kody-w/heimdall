@@ -1,5 +1,5 @@
 {
-  "schema": "rapp-rappid/1.1",
+  "schema": "rapp-rappid/2.0",
   "rappid": "rappid:@kody-w/heimdall:915f54e54c714de9bba36604461d05e5",
   "kind": "personal",
   "name": "heimdall",
