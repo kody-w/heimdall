@@ -5,7 +5,7 @@
 - **Address:** `kody-w.github.io/heimdall`
 - **Rappid:** `915f54e5-4c71-4de9-bba3-6604461d05e5`
 - **Kind:** `personal`
-- **Kernel:** v0.6.0 (byte-identical to the grail at `kody-w/rapp-installer`)
+- **Kernel:** v0.6.0 (grail snapshot at planting — the live grail may be newer; see `kody-w/rapp-installer`)
 - **Planted by:** [@kody-w](https://github.com/kody-w)
 - **Location:** Bifrost · the watcher's threshold
 
