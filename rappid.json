@@ -1,6 +1,6 @@
 {
-  "schema": "rapp-rappid/2.0",
-  "rappid": "rappid:@kody-w/heimdall:915f54e54c714de9bba36604461d05e5",
+  "schema": "rapp/1",
+  "rappid": "rappid:@kody-w/heimdall:dd35328e3d58b5b6d27687a0d7bc9c5c4e4626e1899d75d8ea3311705e6f0ca6",
   "kind": "personal",
   "name": "heimdall",
   "display_name": "Heimdall",
@@ -12,6 +12,9 @@
   "planted_at": "2026-05-06T15:32:41Z",
   "planted_from": null,
   "kernel_version": "0.6.0",
-  "location": "Bifrost \u00b7 the watcher's threshold",
-  "_migrated_from": "915f54e5-4c71-4de9-bba3-6604461d05e5"
+  "location": "Bifrost · the watcher's threshold",
+  "_migrated_from": [
+    "rappid:@kody-w/heimdall:915f54e54c714de9bba36604461d05e5",
+    "915f54e5-4c71-4de9-bba3-6604461d05e5"
+  ]
 }
