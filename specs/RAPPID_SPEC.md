@@ -1,6 +1,6 @@
 # RAPPID_SPEC — Identity v2
 
-> **Frozen excerpt** of the canonical rappid contract (`rapp-rappid/2.0`). Bundled at planting time on 2026-05-09T12:51:35Z.
+> **Frozen excerpt** of the canonical rappid contract (`rapp/1`). Bundled at planting time on 2026-05-09T12:51:35Z.
 
 ## Format
 
@@ -34,11 +34,11 @@ rappid:v2:<kind>:@kody-w/heimdall:<32-hex>@github.com/kody-w/heimdall
 4. **No two organisms share a rappid.** Mint via `uuid.uuid4().hex` — collision probability is negligible.
 5. **The rappid is the seed source for the neighborhood's holocard.** `derive_seed(rappid_str)` via BLAKE2b-64 produces a deterministic 64-bit ID. Same rappid → same seed → same incantation, forever.
 
-## Required fields in `../rappid.json` (`rapp-rappid/2.0`)
+## Required fields in `../rappid.json` (`rapp/1`)
 
 | Field | Required | Notes |
 |---|---|---|
-| `schema`       | yes | `rapp-rappid/2.0` |
+| `schema`       | yes | `rapp/1` |
 | `rappid`       | yes | The full v2 string |
 | `kind`         | yes | One of the 6 kinds above |
 | `name`         | yes | Slug — matches the repo name |
