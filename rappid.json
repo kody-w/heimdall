@@ -6,7 +6,7 @@
   "display_name": "Heimdall",
   "github": "https://github.com/kody-w/heimdall",
   "url": "https://kody-w.github.io/heimdall",
-  "parent_rappid": "0b635450-c042-49fb-b4b1-bdb571044dec",
+  "parent_rappid": "rappid:@kody-w/rapp:9a8f0a4b5a710e20f4d819a0f37d2a4c9f113b5e78fb3c29e70b54fff48a38f9",
   "parent_repo": "https://github.com/kody-w/rapp-installer",
   "planted_by": "kody-w",
   "planted_at": "2026-05-06T15:32:41Z",
@@ -16,5 +16,6 @@
   "_migrated_from": [
     "rappid:@kody-w/heimdall:915f54e54c714de9bba36604461d05e5",
     "915f54e5-4c71-4de9-bba3-6604461d05e5"
-  ]
+  ],
+  "_parent_migrated_from": "0b635450-c042-49fb-b4b1-bdb571044dec"
 }
