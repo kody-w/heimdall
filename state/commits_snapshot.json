@@ -21,6 +21,88 @@
    "url": "https://api.github.com/users/kody-w",
    "user_view_type": "public"
   },
+  "comments_url": "https://api.github.com/repos/kody-w/heimdall/commits/8c563770641ba1e02d24167d6812acc49752386e/comments",
+  "commit": {
+   "author": {
+    "date": "2026-08-28T02:33:36Z",
+    "email": "kwildfeuer@me.com",
+    "name": "Kody Wildfeuer"
+   },
+   "comment_count": 0,
+   "committer": {
+    "date": "2026-08-28T02:33:36Z",
+    "email": "kwildfeuer@me.com",
+    "name": "Kody Wildfeuer"
+   },
+   "message": "pages: Article XXIV \u2014 zero unauthenticated api.github.com reads\n\nclassic.html and doorman/index.html made 11 unauthenticated api.github.com\ncalls per visitor: this seed's own repo metadata / recent commits /\nagents/ listing (egg-sealing, fillAgents, fillMutations, _forkCount,\n_customAgentCount, the doorman's public-agents inventory, the ascended-egg\nexporter's origin commit), plus the same three signals for a seed's\nparent_repo to compute the lineage MMR gift. Each now reads a CI-harvested\nstate/*_snapshot.json committed here, in the identical shape the replaced\nAPI endpoint returns, via scripts/harvest_gh_snapshots.py (initial harvest\nincluded) and a daily/on-push workflow.\n\nThe private_companion agents lookup in doorman/index.html stays a live,\nauthenticated fetch \u2014 its repo may be access-gated and can't be\npre-published. Login and Issues-as-API writes (memory sync, private\nmemories) are untouched: they require a token and are exempt.\n\nindex.html carries no violations and is untouched.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>",
+   "tree": {
+    "sha": "e850e294e7a7dc04112f8971bf84a9b870eed97f",
+    "url": "https://api.github.com/repos/kody-w/heimdall/git/trees/e850e294e7a7dc04112f8971bf84a9b870eed97f"
+   },
+   "url": "https://api.github.com/repos/kody-w/heimdall/git/commits/8c563770641ba1e02d24167d6812acc49752386e",
+   "verification": {
+    "payload": null,
+    "reason": "unsigned",
+    "signature": null,
+    "verified": false,
+    "verified_at": null
+   }
+  },
+  "committer": {
+   "avatar_url": "https://avatars.githubusercontent.com/u/1735900?v=4",
+   "events_url": "https://api.github.com/users/kody-w/events{/privacy}",
+   "followers_url": "https://api.github.com/users/kody-w/followers",
+   "following_url": "https://api.github.com/users/kody-w/following{/other_user}",
+   "gists_url": "https://api.github.com/users/kody-w/gists{/gist_id}",
+   "gravatar_id": "",
+   "html_url": "https://github.com/kody-w",
+   "id": 1735900,
+   "login": "kody-w",
+   "node_id": "MDQ6VXNlcjE3MzU5MDA=",
+   "organizations_url": "https://api.github.com/users/kody-w/orgs",
+   "received_events_url": "https://api.github.com/users/kody-w/received_events",
+   "repos_url": "https://api.github.com/users/kody-w/repos",
+   "site_admin": false,
+   "starred_url": "https://api.github.com/users/kody-w/starred{/owner}{/repo}",
+   "subscriptions_url": "https://api.github.com/users/kody-w/subscriptions",
+   "type": "User",
+   "url": "https://api.github.com/users/kody-w",
+   "user_view_type": "public"
+  },
+  "html_url": "https://github.com/kody-w/heimdall/commit/8c563770641ba1e02d24167d6812acc49752386e",
+  "node_id": "C_kwDOSWCFbdoAKDhjNTYzNzcwNjQxYmExZTAyZDI0MTY3ZDY4MTJhY2M0OTc1MjM4NmU",
+  "parents": [
+   {
+    "html_url": "https://github.com/kody-w/heimdall/commit/4f5a7b5a5b74b77f13428715bf6939f79bd95e28",
+    "sha": "4f5a7b5a5b74b77f13428715bf6939f79bd95e28",
+    "url": "https://api.github.com/repos/kody-w/heimdall/commits/4f5a7b5a5b74b77f13428715bf6939f79bd95e28"
+   }
+  ],
+  "sha": "8c563770641ba1e02d24167d6812acc49752386e",
+  "url": "https://api.github.com/repos/kody-w/heimdall/commits/8c563770641ba1e02d24167d6812acc49752386e"
+ },
+ {
+  "author": {
+   "avatar_url": "https://avatars.githubusercontent.com/u/1735900?v=4",
+   "events_url": "https://api.github.com/users/kody-w/events{/privacy}",
+   "followers_url": "https://api.github.com/users/kody-w/followers",
+   "following_url": "https://api.github.com/users/kody-w/following{/other_user}",
+   "gists_url": "https://api.github.com/users/kody-w/gists{/gist_id}",
+   "gravatar_id": "",
+   "html_url": "https://github.com/kody-w",
+   "id": 1735900,
+   "login": "kody-w",
+   "node_id": "MDQ6VXNlcjE3MzU5MDA=",
+   "organizations_url": "https://api.github.com/users/kody-w/orgs",
+   "received_events_url": "https://api.github.com/users/kody-w/received_events",
+   "repos_url": "https://api.github.com/users/kody-w/repos",
+   "site_admin": false,
+   "starred_url": "https://api.github.com/users/kody-w/starred{/owner}{/repo}",
+   "subscriptions_url": "https://api.github.com/users/kody-w/subscriptions",
+   "type": "User",
+   "url": "https://api.github.com/users/kody-w",
+   "user_view_type": "public"
+  },
   "comments_url": "https://api.github.com/repos/kody-w/heimdall/commits/4f5a7b5a5b74b77f13428715bf6939f79bd95e28/comments",
   "commit": {
    "author": {
@@ -751,87 +833,5 @@
   ],
   "sha": "d7082ad1294127c5b315701a6ec225321566b26b",
   "url": "https://api.github.com/repos/kody-w/heimdall/commits/d7082ad1294127c5b315701a6ec225321566b26b"
- },
- {
-  "author": {
-   "avatar_url": "https://avatars.githubusercontent.com/u/1735900?v=4",
-   "events_url": "https://api.github.com/users/kody-w/events{/privacy}",
-   "followers_url": "https://api.github.com/users/kody-w/followers",
-   "following_url": "https://api.github.com/users/kody-w/following{/other_user}",
-   "gists_url": "https://api.github.com/users/kody-w/gists{/gist_id}",
-   "gravatar_id": "",
-   "html_url": "https://github.com/kody-w",
-   "id": 1735900,
-   "login": "kody-w",
-   "node_id": "MDQ6VXNlcjE3MzU5MDA=",
-   "organizations_url": "https://api.github.com/users/kody-w/orgs",
-   "received_events_url": "https://api.github.com/users/kody-w/received_events",
-   "repos_url": "https://api.github.com/users/kody-w/repos",
-   "site_admin": false,
-   "starred_url": "https://api.github.com/users/kody-w/starred{/owner}{/repo}",
-   "subscriptions_url": "https://api.github.com/users/kody-w/subscriptions",
-   "type": "User",
-   "url": "https://api.github.com/users/kody-w",
-   "user_view_type": "public"
-  },
-  "comments_url": "https://api.github.com/repos/kody-w/heimdall/commits/7283cbd3ea34361b12d2c6de432db7e690c48a61/comments",
-  "commit": {
-   "author": {
-    "date": "2026-06-03T19:44:24Z",
-    "email": "kwildfeuer@me.com",
-    "name": "Kody Wildfeuer"
-   },
-   "comment_count": 0,
-   "committer": {
-    "date": "2026-06-03T19:44:24Z",
-    "email": "kwildfeuer@me.com",
-    "name": "Kody Wildfeuer"
-   },
-   "message": "Migrate rappid.json to the consolidated rappid form\n\nMigrate this door's identity to the **consolidated rappid** `rappid:@<owner>/<slug>:<64hex>` (CONSTITUTION Art. XXXIV.1, locked 2026-06-03). The hash (identity) is preserved; `kind` stays in the record; the old string is kept in `_migrated_from`. Renderers read record fields, not the string \u2014 no rendering change.\n\n\ud83e\udd16 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
-   "tree": {
-    "sha": "928de0cb7d2d2661c72dbc849dd66f5dc960d4c9",
-    "url": "https://api.github.com/repos/kody-w/heimdall/git/trees/928de0cb7d2d2661c72dbc849dd66f5dc960d4c9"
-   },
-   "url": "https://api.github.com/repos/kody-w/heimdall/git/commits/7283cbd3ea34361b12d2c6de432db7e690c48a61",
-   "verification": {
-    "payload": null,
-    "reason": "unsigned",
-    "signature": null,
-    "verified": false,
-    "verified_at": null
-   }
-  },
-  "committer": {
-   "avatar_url": "https://avatars.githubusercontent.com/u/1735900?v=4",
-   "events_url": "https://api.github.com/users/kody-w/events{/privacy}",
-   "followers_url": "https://api.github.com/users/kody-w/followers",
-   "following_url": "https://api.github.com/users/kody-w/following{/other_user}",
-   "gists_url": "https://api.github.com/users/kody-w/gists{/gist_id}",
-   "gravatar_id": "",
-   "html_url": "https://github.com/kody-w",
-   "id": 1735900,
-   "login": "kody-w",
-   "node_id": "MDQ6VXNlcjE3MzU5MDA=",
-   "organizations_url": "https://api.github.com/users/kody-w/orgs",
-   "received_events_url": "https://api.github.com/users/kody-w/received_events",
-   "repos_url": "https://api.github.com/users/kody-w/repos",
-   "site_admin": false,
-   "starred_url": "https://api.github.com/users/kody-w/starred{/owner}{/repo}",
-   "subscriptions_url": "https://api.github.com/users/kody-w/subscriptions",
-   "type": "User",
-   "url": "https://api.github.com/users/kody-w",
-   "user_view_type": "public"
-  },
-  "html_url": "https://github.com/kody-w/heimdall/commit/7283cbd3ea34361b12d2c6de432db7e690c48a61",
-  "node_id": "C_kwDOSWCFbdoAKDcyODNjYmQzZWEzNDM2MWIxMmQyYzZkZTQzMmRiN2U2OTBjNDhhNjE",
-  "parents": [
-   {
-    "html_url": "https://github.com/kody-w/heimdall/commit/8eeacf5ea0f1fc662344418096c47a1c460377d3",
-    "sha": "8eeacf5ea0f1fc662344418096c47a1c460377d3",
-    "url": "https://api.github.com/repos/kody-w/heimdall/commits/8eeacf5ea0f1fc662344418096c47a1c460377d3"
-   }
-  ],
-  "sha": "7283cbd3ea34361b12d2c6de432db7e690c48a61",
-  "url": "https://api.github.com/repos/kody-w/heimdall/commits/7283cbd3ea34361b12d2c6de432db7e690c48a61"
  }
 ]

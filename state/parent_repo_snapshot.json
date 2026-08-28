@@ -78,6 +78,13 @@
   "url": "https://api.github.com/users/kody-w",
   "user_view_type": "public"
  },
+ "permissions": {
+  "admin": false,
+  "maintain": false,
+  "pull": false,
+  "push": false,
+  "triage": false
+ },
  "private": false,
  "pull_request_creation_policy": "all",
  "pulls_url": "https://api.github.com/repos/kody-w/rapp-installer/pulls{/number}",
@@ -94,7 +101,7 @@
  "svn_url": "https://github.com/kody-w/rapp-installer",
  "tags_url": "https://api.github.com/repos/kody-w/rapp-installer/tags",
  "teams_url": "https://api.github.com/repos/kody-w/rapp-installer/teams",
- "temp_clone_token": null,
+ "temp_clone_token": "",
  "topics": [],
  "trees_url": "https://api.github.com/repos/kody-w/rapp-installer/git/trees{/sha}",
  "updated_at": "2026-08-28T01:10:36Z",
