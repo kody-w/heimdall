@@ -1,0 +1,40 @@
+name: Harvest GH Snapshots
+
+# Article XXIV (the Static Data Covenant, kody-w/RAR CONSTITUTION.md): pages
+# read committed static data, never the GitHub API. classic.html and
+# doorman/index.html used to call api.github.com directly from every
+# visitor's browser for this seed's repo metadata, recent commits, and
+# agents/ listing (plus the same three for the parent_repo lineage gift).
+# This workflow re-harvests those into state/*.json on a schedule and after
+# every push, in the identical shape the API endpoints return.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'state/*_snapshot.json'
+  schedule:
+    - cron: '17 5 * * *'  # daily — commit/fork counts and lineage MMR drift slowly
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Harvest snapshots
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/harvest_gh_snapshots.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add state/repo_snapshot.json state/commits_snapshot.json state/agents_snapshot.json \
+                   state/parent_repo_snapshot.json state/parent_commits_snapshot.json state/parent_agents_snapshot.json
+          git diff --cached --quiet || { git commit -m "chore: refresh GH snapshots [skip ci]"; git push; }

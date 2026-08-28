@@ -2222,9 +2222,11 @@ async function buildDoormanEgg() {
     // its own offline resume from THIS snapshot — no need to call
     // back to github.com. Each hatched dimension can then accumulate
     // its own local mutations on top of the inherited starting state.
+    // Article XXIV: committed CI snapshots, same shape as the commits/repo
+    // API responses — no runtime api.github.com call from the visitor.
     const [commitsRes, repoRes] = await Promise.all([
-      cachedGhJson(`https://api.github.com/repos/${oc.owner}/${oc.repo}/commits?per_page=10`),
-      cachedGhJson(`https://api.github.com/repos/${oc.owner}/${oc.repo}`),
+      cachedGhJson(`https://raw.githubusercontent.com/${oc.owner}/${oc.repo}/main/state/commits_snapshot.json`),
+      cachedGhJson(`https://raw.githubusercontent.com/${oc.owner}/${oc.repo}/main/state/repo_snapshot.json`),
     ]);
     if (Array.isArray(commitsRes.value) && commitsRes.value[0]) {
       originCommit = commitsRes.value[0].sha || null;
@@ -3381,8 +3383,9 @@ async function fillAgents() {
   if (!owner || !repo) { el.innerHTML = ""; return; }
   // Local-first: cachedGhJson tries network, then localStorage cache.
   // An organism running offline still renders its agents from the last
-  // successful sync — never goes blank.
-  const res = await cachedGhJson(`https://api.github.com/repos/${owner}/${repo}/contents/agents`);
+  // successful sync — never goes blank. Article XXIV: reads the CI-committed
+  // snapshot (same shape as contents/agents) instead of api.github.com.
+  const res = await cachedGhJson(`https://raw.githubusercontent.com/${owner}/${repo}/main/state/agents_snapshot.json`);
   const list = res.value;
   if (!Array.isArray(list)) {
     el.innerHTML = res.source === "none"
@@ -3456,7 +3459,9 @@ async function fillMutations() {
   const linkEl = document.getElementById("tr-history-link");
   if (linkEl && owner && repo) linkEl.href = `https://github.com/${owner}/${repo}/commits`;
   // Local-first: cached GH fetch keeps the mutation log visible offline.
-  const res = await cachedGhJson(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=6`);
+  // Article XXIV: reads the CI-committed snapshot (same shape as
+  // commits?per_page=10, sliced same as before) instead of api.github.com.
+  const res = await cachedGhJson(`https://raw.githubusercontent.com/${owner}/${repo}/main/state/commits_snapshot.json`);
   const commits = res.value;
   if (!Array.isArray(commits) || !commits.length) {
     list.innerHTML = res.source === "none"
@@ -3481,7 +3486,8 @@ async function fillMutations() {
 async function _forkCount() {
   const { owner, repo } = _ghOwnerRepo();
   if (!owner || !repo) return 0;
-  const res = await cachedGhJson(`https://api.github.com/repos/${owner}/${repo}`);
+  // Article XXIV: CI-committed snapshot, same shape as GET /repos/{o}/{r}.
+  const res = await cachedGhJson(`https://raw.githubusercontent.com/${owner}/${repo}/main/state/repo_snapshot.json`);
   return Math.max(0, (res.value && res.value.forks_count) || 0);
 }
 
@@ -3606,11 +3612,19 @@ async function _parentLineageGift(rappidObj) {
   // Local-first: each lookup is cache-wrapped. If we go airplane mode,
   // the lineage gift renders from the last successful sync — the
   // organism never forgets its parent.
+  // Article XXIV: the parent's repo/commits/agents signals come from
+  // THIS seed's own CI-committed snapshots (same shape as the
+  // api.github.com responses they replace — harvested from parent_repo
+  // by scripts/harvest_gh_snapshots.py and committed here, not fetched
+  // live from the parent). Only the parent's own memory.json still needs
+  // a per-parent live read, and that's already raw.githubusercontent.com,
+  // not the rate-limited api.github.com surface.
+  const self = _ghOwnerRepo();
   const [repoRes, commitsRes, memRes, agentsRes] = await Promise.all([
-    cachedGhJson(`https://api.github.com/repos/${owner}/${repo}`),
-    cachedGhJson(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=6`),
+    cachedGhJson(`https://raw.githubusercontent.com/${self.owner}/${self.repo}/main/state/parent_repo_snapshot.json`),
+    cachedGhJson(`https://raw.githubusercontent.com/${self.owner}/${self.repo}/main/state/parent_commits_snapshot.json`),
     cachedGhText(`https://raw.githubusercontent.com/${owner}/${repo}/main/.brainstem_data/memory.json`),
-    cachedGhJson(`https://api.github.com/repos/${owner}/${repo}/contents/agents`),
+    cachedGhJson(`https://raw.githubusercontent.com/${self.owner}/${self.repo}/main/state/parent_agents_snapshot.json`),
   ]);
   const repoJ = repoRes.value;
   if (!repoJ) return null;
@@ -3723,9 +3737,8 @@ async function _customAgentCount() {
   const { owner, repo } = _ghOwnerRepo();
   if (!owner || !repo) return 0;
   try {
-    const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/agents`, {
-      headers: { Accept: "application/vnd.github+json" },
-    });
+    // Article XXIV: CI-committed snapshot, same shape as contents/agents.
+    const r = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/state/agents_snapshot.json`);
     if (!r.ok) return 0;
     const list = await r.json();
     if (!Array.isArray(list)) return 0;

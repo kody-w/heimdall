@@ -988,6 +988,27 @@ async function loadAgents(token) {
 
 async function listAgentFiles(owner, repo, token) {
   if (!owner || !repo) return [];
+  // Article XXIV: the public seed (this page's own repo) reads a
+  // CI-committed snapshot instead of api.github.com — it's the same repo
+  // this doorman is deployed from, so its agents/ listing is always
+  // public and can be pre-harvested. A private_companion repo can't be
+  // (its contents may be access-gated), so that call stays live and
+  // authenticated below.
+  const seed = repoCoords();
+  if (owner === seed.owner && repo === seed.repo) {
+    try {
+      const r = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/state/agents_snapshot.json`);
+      if (!r.ok) return [];
+      const list = await r.json();
+      if (!Array.isArray(list)) return [];
+      return list
+        .filter(f => f.type === "file" && f.name.endsWith(".py") && !f.name.startsWith("_"))
+        .map(f => f.name)
+        .sort();
+    } catch (_) {
+      return [];
+    }
+  }
   const headers = { Accept: "application/vnd.github+json" };
   if (token) headers.Authorization = "Bearer " + token;
   try {
@@ -1302,9 +1323,9 @@ async function buildAscendedEgg() {
   const seedRepoName = location.pathname.split("/").filter(Boolean)[0] || "";
   if (seedOwner && seedRepoName) {
     try {
-      const r = await fetch(`https://api.github.com/repos/${seedOwner}/${seedRepoName}/commits?per_page=1`, {
-        headers: { Accept: "application/vnd.github+json" },
-      });
+      // Article XXIV: CI-committed snapshot, same shape as commits?per_page=N
+      // (this seed's own state/commits_snapshot.json — take the newest entry).
+      const r = await fetch(`https://raw.githubusercontent.com/${seedOwner}/${seedRepoName}/main/state/commits_snapshot.json`);
       if (r.ok) {
         const arr = await r.json();
         if (Array.isArray(arr) && arr[0] && arr[0].sha) originCommit = arr[0].sha;
