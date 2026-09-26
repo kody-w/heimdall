@@ -1,6 +1,170 @@
 [
  {
   "author": {
+   "avatar_url": "https://avatars.githubusercontent.com/u/1735900?v=4",
+   "events_url": "https://api.github.com/users/kody-w/events{/privacy}",
+   "followers_url": "https://api.github.com/users/kody-w/followers",
+   "following_url": "https://api.github.com/users/kody-w/following{/other_user}",
+   "gists_url": "https://api.github.com/users/kody-w/gists{/gist_id}",
+   "gravatar_id": "",
+   "html_url": "https://github.com/kody-w",
+   "id": 1735900,
+   "login": "kody-w",
+   "node_id": "MDQ6VXNlcjE3MzU5MDA=",
+   "organizations_url": "https://api.github.com/users/kody-w/orgs",
+   "received_events_url": "https://api.github.com/users/kody-w/received_events",
+   "repos_url": "https://api.github.com/users/kody-w/repos",
+   "site_admin": false,
+   "starred_url": "https://api.github.com/users/kody-w/starred{/owner}{/repo}",
+   "subscriptions_url": "https://api.github.com/users/kody-w/subscriptions",
+   "type": "User",
+   "url": "https://api.github.com/users/kody-w",
+   "user_view_type": "public"
+  },
+  "comments_url": "https://api.github.com/repos/kody-w/heimdall/commits/fb4571163e0a87bf7344e916a5f0b8226e56b3c8/comments",
+  "commit": {
+   "author": {
+    "date": "2026-09-26T19:28:23Z",
+    "email": "kwildfeuer@me.com",
+    "name": "Kody Wildfeuer"
+   },
+   "comment_count": 0,
+   "committer": {
+    "date": "2026-09-26T19:28:23Z",
+    "email": "noreply@github.com",
+    "name": "GitHub"
+   },
+   "message": "RAPP/1 network header and member card (#6)\n\nOwner authorization (2026-09-26 09:02 EDT): \"no finish doing the subway mapping for him. thats what I am talking about and thats what he is waiting for\" (wave 2), under the standing merge authorization (2026-09-25 20:47 EDT): \"just merge what needs to be merged... just dont touch grail!!!\"\n\nRAPP/1 network wave 2: README network header and .rapp/member.md card. Verified before merge: head SHA matched; source rapp1/network-header by kody-w; only README header block (exact template) and a new card with the required fields and links; no grail or kernel paths; privacy scan 0 findings; CI {'pass': 1}.\n\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>\nCopilot-Session: b6562323-1ad0-4e5e-9951-f2273c033d4a",
+   "tree": {
+    "sha": "a9afe3e21f4bb23269d83dc556c4a75e544055c9",
+    "url": "https://api.github.com/repos/kody-w/heimdall/git/trees/a9afe3e21f4bb23269d83dc556c4a75e544055c9"
+   },
+   "url": "https://api.github.com/repos/kody-w/heimdall/git/commits/fb4571163e0a87bf7344e916a5f0b8226e56b3c8",
+   "verification": {
+    "payload": "tree a9afe3e21f4bb23269d83dc556c4a75e544055c9\nparent 022079ab0c01c43e091fd6000dea524b3a273164\nauthor Kody Wildfeuer <kwildfeuer@me.com> 1790450903 -0400\ncommitter GitHub <noreply@github.com> 1790450903 -0400\n\nRAPP/1 network header and member card (#6)\n\nOwner authorization (2026-09-26 09:02 EDT): \"no finish doing the subway mapping for him. thats what I am talking about and thats what he is waiting for\" (wave 2), under the standing merge authorization (2026-09-25 20:47 EDT): \"just merge what needs to be merged... just dont touch grail!!!\"\n\nRAPP/1 network wave 2: README network header and .rapp/member.md card. Verified before merge: head SHA matched; source rapp1/network-header by kody-w; only README header block (exact template) and a new card with the required fields and links; no grail or kernel paths; privacy scan 0 findings; CI {'pass': 1}.\n\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>\nCopilot-Session: b6562323-1ad0-4e5e-9951-f2273c033d4a",
+    "reason": "valid",
+    "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJquBzXCRC1aQ7uu5UhlAAAgKEQAEn6RDtS6q29UQ3uyG9KmZpa\na0VZ2CVQIDhGeQeahh91jl7bh6g4hlIU7Lj5BJo/LFXNCtwBGuGrOlRv/2rnpp7o\nsO2wsLkVtR266VgAUReoPiB2ewLbBd2B9f8GZ/neO6Yu72qVySold4pl4nBGXKIf\nGmuZ2AATXUsDJoh44p5Qsqhj6bu6+O6vzgJagd3NG2BsNU/or02Cfykuq5eXdYtx\nWp6xqL+gTtsmcS8c7WCBOvxlBTqJZtgDZJM513Upd88qtTqq45Cbpq5alslBdbwH\nuLZE8BOvCSyAdavTxZLJdEDgB9aftuugy+n0cgExSDeyAdXUFB+WU1iK/64jv4GS\nSwpr2LQgUV8IMGb8DbA3xp86hZ//8w8BRb0Ehvi6sTd3v+BVmXsOjPgU24Xcx2y4\nFhaDc2l/9xcD8X0vDpId7eC5DwnHanM5Qk/AymxHsbeojNuQFR8gYx2EYVD0lDcM\nCW2Zx2QameFhf/NQwU4pPkLb08ie3+4Qvpi5BLGtq+20xT4dMYlnE5AOphR56gvE\nIM/Zil4LbbXVtimXZvwNdjQDypgRstrjjzENiWGkn6SiZE0P1Bm2DfwIM0bggNjH\nFYy02HphWkJ2Cd7aSBoDZwioCsYjFqHdn6kL23vsjJPMppYnIeihnp+ET1BtdkOB\nC3tcB75pQigkqDL7joHk\n=cp+q\n-----END PGP SIGNATURE-----\n",
+    "verified": true,
+    "verified_at": "2026-09-26T19:28:23Z"
+   }
+  },
+  "committer": {
+   "avatar_url": "https://avatars.githubusercontent.com/u/19864447?v=4",
+   "events_url": "https://api.github.com/users/web-flow/events{/privacy}",
+   "followers_url": "https://api.github.com/users/web-flow/followers",
+   "following_url": "https://api.github.com/users/web-flow/following{/other_user}",
+   "gists_url": "https://api.github.com/users/web-flow/gists{/gist_id}",
+   "gravatar_id": "",
+   "html_url": "https://github.com/web-flow",
+   "id": 19864447,
+   "login": "web-flow",
+   "node_id": "MDQ6VXNlcjE5ODY0NDQ3",
+   "organizations_url": "https://api.github.com/users/web-flow/orgs",
+   "received_events_url": "https://api.github.com/users/web-flow/received_events",
+   "repos_url": "https://api.github.com/users/web-flow/repos",
+   "site_admin": false,
+   "starred_url": "https://api.github.com/users/web-flow/starred{/owner}{/repo}",
+   "subscriptions_url": "https://api.github.com/users/web-flow/subscriptions",
+   "type": "User",
+   "url": "https://api.github.com/users/web-flow",
+   "user_view_type": "public"
+  },
+  "html_url": "https://github.com/kody-w/heimdall/commit/fb4571163e0a87bf7344e916a5f0b8226e56b3c8",
+  "node_id": "C_kwDOSWCFbdoAKGZiNDU3MTE2M2UwYTg3YmY3MzQ0ZTkxNmE1ZjBiODIyNmU1NmIzYzg",
+  "parents": [
+   {
+    "html_url": "https://github.com/kody-w/heimdall/commit/022079ab0c01c43e091fd6000dea524b3a273164",
+    "sha": "022079ab0c01c43e091fd6000dea524b3a273164",
+    "url": "https://api.github.com/repos/kody-w/heimdall/commits/022079ab0c01c43e091fd6000dea524b3a273164"
+   }
+  ],
+  "sha": "fb4571163e0a87bf7344e916a5f0b8226e56b3c8",
+  "url": "https://api.github.com/repos/kody-w/heimdall/commits/fb4571163e0a87bf7344e916a5f0b8226e56b3c8"
+ },
+ {
+  "author": {
+   "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+   "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+   "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+   "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+   "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+   "gravatar_id": "",
+   "html_url": "https://github.com/apps/github-actions",
+   "id": 41898282,
+   "login": "github-actions[bot]",
+   "node_id": "MDM6Qm90NDE4OTgyODI=",
+   "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+   "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+   "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+   "site_admin": false,
+   "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+   "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+   "type": "Bot",
+   "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+   "user_view_type": "public"
+  },
+  "comments_url": "https://api.github.com/repos/kody-w/heimdall/commits/022079ab0c01c43e091fd6000dea524b3a273164/comments",
+  "commit": {
+   "author": {
+    "date": "2026-09-26T09:51:30Z",
+    "email": "41898282+github-actions[bot]@users.noreply.github.com",
+    "name": "github-actions[bot]"
+   },
+   "comment_count": 0,
+   "committer": {
+    "date": "2026-09-26T09:51:30Z",
+    "email": "41898282+github-actions[bot]@users.noreply.github.com",
+    "name": "github-actions[bot]"
+   },
+   "message": "chore: refresh GH snapshots [skip ci]",
+   "tree": {
+    "sha": "6fc4d23cc6a1992afc153a7b2e55d2a9cbb0faab",
+    "url": "https://api.github.com/repos/kody-w/heimdall/git/trees/6fc4d23cc6a1992afc153a7b2e55d2a9cbb0faab"
+   },
+   "url": "https://api.github.com/repos/kody-w/heimdall/git/commits/022079ab0c01c43e091fd6000dea524b3a273164",
+   "verification": {
+    "payload": null,
+    "reason": "unsigned",
+    "signature": null,
+    "verified": false,
+    "verified_at": null
+   }
+  },
+  "committer": {
+   "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+   "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+   "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+   "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+   "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+   "gravatar_id": "",
+   "html_url": "https://github.com/apps/github-actions",
+   "id": 41898282,
+   "login": "github-actions[bot]",
+   "node_id": "MDM6Qm90NDE4OTgyODI=",
+   "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+   "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+   "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+   "site_admin": false,
+   "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+   "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+   "type": "Bot",
+   "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+   "user_view_type": "public"
+  },
+  "html_url": "https://github.com/kody-w/heimdall/commit/022079ab0c01c43e091fd6000dea524b3a273164",
+  "node_id": "C_kwDOSWCFbdoAKDAyMjA3OWFiMGMwMWM0M2UwOTFmZDYwMDBkZWE1MjRiM2EyNzMxNjQ",
+  "parents": [
+   {
+    "html_url": "https://github.com/kody-w/heimdall/commit/935cb5d410bf4caacdbba808dfcdb1e4e2a43dc7",
+    "sha": "935cb5d410bf4caacdbba808dfcdb1e4e2a43dc7",
+    "url": "https://api.github.com/repos/kody-w/heimdall/commits/935cb5d410bf4caacdbba808dfcdb1e4e2a43dc7"
+   }
+  ],
+  "sha": "022079ab0c01c43e091fd6000dea524b3a273164",
+  "url": "https://api.github.com/repos/kody-w/heimdall/commits/022079ab0c01c43e091fd6000dea524b3a273164"
+ },
+ {
+  "author": {
    "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
    "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
    "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
@@ -654,169 +818,5 @@
   ],
   "sha": "7d84a65b6f7f714ed15bebb75de2eb40d2a5b24b",
   "url": "https://api.github.com/repos/kody-w/heimdall/commits/7d84a65b6f7f714ed15bebb75de2eb40d2a5b24b"
- },
- {
-  "author": {
-   "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
-   "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
-   "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
-   "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
-   "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
-   "gravatar_id": "",
-   "html_url": "https://github.com/apps/github-actions",
-   "id": 41898282,
-   "login": "github-actions[bot]",
-   "node_id": "MDM6Qm90NDE4OTgyODI=",
-   "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
-   "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
-   "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
-   "site_admin": false,
-   "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
-   "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
-   "type": "Bot",
-   "url": "https://api.github.com/users/github-actions%5Bbot%5D",
-   "user_view_type": "public"
-  },
-  "comments_url": "https://api.github.com/repos/kody-w/heimdall/commits/19742aed35c74aed5775ecd379f208398f2bc00a/comments",
-  "commit": {
-   "author": {
-    "date": "2026-09-17T09:58:35Z",
-    "email": "41898282+github-actions[bot]@users.noreply.github.com",
-    "name": "github-actions[bot]"
-   },
-   "comment_count": 0,
-   "committer": {
-    "date": "2026-09-17T09:58:35Z",
-    "email": "41898282+github-actions[bot]@users.noreply.github.com",
-    "name": "github-actions[bot]"
-   },
-   "message": "chore: refresh GH snapshots [skip ci]",
-   "tree": {
-    "sha": "8678ff8d03e0d4e9671b4841b7933d548362c014",
-    "url": "https://api.github.com/repos/kody-w/heimdall/git/trees/8678ff8d03e0d4e9671b4841b7933d548362c014"
-   },
-   "url": "https://api.github.com/repos/kody-w/heimdall/git/commits/19742aed35c74aed5775ecd379f208398f2bc00a",
-   "verification": {
-    "payload": null,
-    "reason": "unsigned",
-    "signature": null,
-    "verified": false,
-    "verified_at": null
-   }
-  },
-  "committer": {
-   "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
-   "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
-   "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
-   "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
-   "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
-   "gravatar_id": "",
-   "html_url": "https://github.com/apps/github-actions",
-   "id": 41898282,
-   "login": "github-actions[bot]",
-   "node_id": "MDM6Qm90NDE4OTgyODI=",
-   "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
-   "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
-   "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
-   "site_admin": false,
-   "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
-   "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
-   "type": "Bot",
-   "url": "https://api.github.com/users/github-actions%5Bbot%5D",
-   "user_view_type": "public"
-  },
-  "html_url": "https://github.com/kody-w/heimdall/commit/19742aed35c74aed5775ecd379f208398f2bc00a",
-  "node_id": "C_kwDOSWCFbdoAKDE5NzQyYWVkMzVjNzRhZWQ1Nzc1ZWNkMzc5ZjIwODM5OGYyYmMwMGE",
-  "parents": [
-   {
-    "html_url": "https://github.com/kody-w/heimdall/commit/c40e5b3a6e750a9c8a080bbe4cb25ae5451913f8",
-    "sha": "c40e5b3a6e750a9c8a080bbe4cb25ae5451913f8",
-    "url": "https://api.github.com/repos/kody-w/heimdall/commits/c40e5b3a6e750a9c8a080bbe4cb25ae5451913f8"
-   }
-  ],
-  "sha": "19742aed35c74aed5775ecd379f208398f2bc00a",
-  "url": "https://api.github.com/repos/kody-w/heimdall/commits/19742aed35c74aed5775ecd379f208398f2bc00a"
- },
- {
-  "author": {
-   "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
-   "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
-   "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
-   "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
-   "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
-   "gravatar_id": "",
-   "html_url": "https://github.com/apps/github-actions",
-   "id": 41898282,
-   "login": "github-actions[bot]",
-   "node_id": "MDM6Qm90NDE4OTgyODI=",
-   "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
-   "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
-   "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
-   "site_admin": false,
-   "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
-   "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
-   "type": "Bot",
-   "url": "https://api.github.com/users/github-actions%5Bbot%5D",
-   "user_view_type": "public"
-  },
-  "comments_url": "https://api.github.com/repos/kody-w/heimdall/commits/c40e5b3a6e750a9c8a080bbe4cb25ae5451913f8/comments",
-  "commit": {
-   "author": {
-    "date": "2026-09-16T09:56:16Z",
-    "email": "41898282+github-actions[bot]@users.noreply.github.com",
-    "name": "github-actions[bot]"
-   },
-   "comment_count": 0,
-   "committer": {
-    "date": "2026-09-16T09:56:16Z",
-    "email": "41898282+github-actions[bot]@users.noreply.github.com",
-    "name": "github-actions[bot]"
-   },
-   "message": "chore: refresh GH snapshots [skip ci]",
-   "tree": {
-    "sha": "cfbe64f7f785e7af02ca45fd5a4d41c5eeac7ce1",
-    "url": "https://api.github.com/repos/kody-w/heimdall/git/trees/cfbe64f7f785e7af02ca45fd5a4d41c5eeac7ce1"
-   },
-   "url": "https://api.github.com/repos/kody-w/heimdall/git/commits/c40e5b3a6e750a9c8a080bbe4cb25ae5451913f8",
-   "verification": {
-    "payload": null,
-    "reason": "unsigned",
-    "signature": null,
-    "verified": false,
-    "verified_at": null
-   }
-  },
-  "committer": {
-   "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
-   "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
-   "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
-   "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
-   "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
-   "gravatar_id": "",
-   "html_url": "https://github.com/apps/github-actions",
-   "id": 41898282,
-   "login": "github-actions[bot]",
-   "node_id": "MDM6Qm90NDE4OTgyODI=",
-   "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
-   "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
-   "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
-   "site_admin": false,
-   "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
-   "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
-   "type": "Bot",
-   "url": "https://api.github.com/users/github-actions%5Bbot%5D",
-   "user_view_type": "public"
-  },
-  "html_url": "https://github.com/kody-w/heimdall/commit/c40e5b3a6e750a9c8a080bbe4cb25ae5451913f8",
-  "node_id": "C_kwDOSWCFbdoAKGM0MGU1YjNhNmU3NTBhOWM4YTA4MGJiZTRjYjI1YWU1NDUxOTEzZjg",
-  "parents": [
-   {
-    "html_url": "https://github.com/kody-w/heimdall/commit/129b24b007e0922b611ad367c071412d3609f68c",
-    "sha": "129b24b007e0922b611ad367c071412d3609f68c",
-    "url": "https://api.github.com/repos/kody-w/heimdall/commits/129b24b007e0922b611ad367c071412d3609f68c"
-   }
-  ],
-  "sha": "c40e5b3a6e750a9c8a080bbe4cb25ae5451913f8",
-  "url": "https://api.github.com/repos/kody-w/heimdall/commits/c40e5b3a6e750a9c8a080bbe4cb25ae5451913f8"
  }
 ]
